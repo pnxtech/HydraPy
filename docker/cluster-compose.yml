@@ -11,6 +11,8 @@ networks:
 configs:
   hydra_router_config:
     file: ./hydra-router-config.json
+  hydrapy_sample_service_config:
+    file: ../sample-service/config.json
 
 services:
   redis:
@@ -56,3 +58,14 @@ services:
     deploy:
       replicas: 1
 
+  hydrapy-sample-service:
+    image: hydrapy-sample-service:1.0.0
+    networks:
+      - servicenet
+    depends_on:
+      - redis
+    configs:
+      - source: hydrapy_sample_service_config
+        target: /usr/src/app/config.json
+    deploy:
+      replicas: 1

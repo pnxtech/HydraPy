@@ -9,5 +9,5 @@ COPY ./requirements.txt /usr/src/app/requirements.txt
 WORKDIR /usr/src/app
 RUN pip3 install -r requirements.txt
 COPY . /usr/src/app
-ENTRYPOINT [ "python3" ]
-CMD [ "service.py" ]
+CMD tail -f /dev/null
+

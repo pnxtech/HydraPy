@@ -1,0 +1,12 @@
+{
+    "hydra": {
+        "serviceName": "hydrapy-sample-service",
+        "serviceIP": "",
+        "servicePort": 15000,
+        "serviceType": "example",
+        "serviceDescription": "A HydraPy sample service",
+        "redis": {
+        "url": "redis://redis:6379/15"
+        }
+    }
+}
