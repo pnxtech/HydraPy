@@ -1,0 +1,37 @@
+{
+  "externalRoutes": {},
+  "routerToken": "",
+  "disableRouterEndpoint": false,
+  "debugLogging": true,
+  "queuerDB": 3,
+  "requestTimeout": 300,
+  "rateLimiter": {
+    "db": 14,
+    "limit": -1,
+    "duration": 3600
+  },
+  "forceMessageSignature": false,
+  "signatureSharedSecret": "d632dd6d-fb75-44cc-bdbf-ee1364f3716c",
+  "hydra": {
+    "serviceName": "hydra-router",
+    "serviceDNS": "hydra-router",
+    "serviceDescription": "Service Router",
+    "serviceIP": "",
+    "servicePort": "80",
+    "serviceType": "router",
+    "plugins": {
+      "loggly": {
+        "method": "POST",
+        "protocol": "http",
+        "hostname": "logs-01.loggly.com",
+        "port": 80,
+        "path": "/inputs/{token-here}/tag/http/",
+        "logToConsole": true,
+        "onlyLogLocally": true
+      }    
+    },
+    "redis": {
+      "url": "redis://redis:6379/15"
+    }
+  }
+}
