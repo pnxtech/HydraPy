@@ -1,3 +1,5 @@
+import asyncio
+import nest_asyncio
 import uuid
 import shortuuid
 from datetime import datetime
@@ -8,7 +10,7 @@ class UMFMessage:
     message = None
 
     def __init__(self):
-        message = {}
+        self.message = {}
 
     def getTimeStamp(self):
         '''retrieve an ISO 8601 timestamp'''
@@ -24,68 +26,111 @@ class UMFMessage:
 
     def toJSON(self):
         '''A JSON stringifiable version of message'''
-        return message
+        return self.message
 
     def toShort(self):
         '''convert a long message to a short one'''
-        let message = {}
-        if self.message['to']:
+        message = {}
+        if 'to' in self.message:
             message['to'] = self.message['to']
-        if self.message['from']:
+        if 'from' in self.message:
             message['frm'] = self.message['from']
-        if self.message['headers']:
+        if 'headers' in self.message:
             message['hdr'] = self.message['headers']
-        if self.message['mid']:
+        if 'mid' in self.message:
             message['mid'] = self.message['mid']
-        if self.message['rmid']:
+        if 'rmid' in self.message:
             message['rmid'] = self.message['rmid']
-        if self.message['signature']:
+        if 'signature' in self.message:
             message['sig'] = self.message['signature']
-        if self.message['timeout']:
+        if 'timeout' in self.message:
             message['tmo'] = self.message['timeout']
-        if self.message['timestamp']:
+        if 'timestamp' in self.message:
             message['ts'] = self.message['timestamp']
-        if self.message['type']:
+        if 'type' in self.message:
             message['typ'] = self.message['type']
-        if self.message['version']:
+        if 'version' in self.message:
             message['ver'] = self.message['version']
-        if self.message['via']:
+        if 'via' in self.message:
             message['via'] = self.message['via']
-        if self.message['forward']:
+        if 'forward' in self.message:
             message['fwd'] = self.message['forward']
-        if self.message['body']:
+        if 'body' in self.message:
             message['bdy'] = self.message['body']
-        if self.message['authorization']:
+        if 'authorization' in self.message:
             message['aut'] = self.message['authorization']
         return message
 
     def createMessage(self, message):
         '''Create a UMF message'''
-        if message['to']:
+        if 'to' in message:
             self.message['to'] = message['to']
-        if message['from'] or message['frm']:
-            self.message['from'] = message['from'] or message['frm']
-        if message['headers'] or message['hdr']:
-            self.message['headers'] = message['headers'] or message['hdr']
-        self.message['mid'] = message.mid or self.createMessageID()
-        if message['rmid']:
+
+        if 'from' in message:
+            self.message['from'] = message['from']
+        if 'frm' in message:
+            self.message['from'] = message['frm']
+
+        if 'headers' in message:
+            self.message['headers'] = message['headers']
+        if 'hdr' in message:
+            self.message['headers'] = message['hdr']
+
+        if 'mid' in message:
+            self.message['mid'] = message.mid
+        else:
+            self.message['mid'] = self.createMessageID()
+
+        if 'rmid' in message:
             self.message['rmid'] = message['rmid']
-        if message['signature'] or message['sig']:
-            self.message['signature'] = message['signature'] or message['sig']
-        if message['timout'] or message['tmo']:
-            self.message['timeout'] = message['timeout'] or message['tmo']
-        self.message['timestamp'] = message['timestamp'] or message['ts'] or self.getTimeStamp()
-        if message['type'] or message['typ']:
-            self.message['type'] = message['type'] or message['typ']
-        self.message['version'] = message['version'] or message['ver'] or self.UMF_VERSION
-        if message['via']:
-            self.message['via'] = message['via]
-        if message['forward'] or message['fwd']:
-            self.message['forward'] = message['forward'] or message['fwd']
-        if message['body'] or self.message['bdy']:
-            self.message['body'] = message['body'] or self.message['bdy']
-        if message['authorization'] or self.message['aut']:
-            self.message['authorization'] = message['authorization'] or self.message['aut']
+
+        if 'signature' in message:
+            self.message['signature'] = message['signature']
+        if 'sig' in message:
+            self.message['signature'] = message['sig']
+
+        if 'timout' in message:
+            self.message['timeout'] = message['timeout']
+        if 'tmo' in message:
+            self.message['timeout'] = message['tmo']
+
+        if 'timestamp' in message:
+            self.message['timestamp'] = message['timestamp']
+        elif 'ts' in message:
+            self.message['timestamp'] = message['ts']
+        else:
+            self.message['timestamp'] = self.getTimeStamp()
+
+        if 'type' in message:
+            self.message['type'] = message['type']
+        if 'typ' in message:
+            self.message['type'] = message['typ']
+
+        if 'version' in message:
+            self.message['version'] = message['version']
+        elif 'ver' in message:
+            self.message['version']  = message['ver']
+        else:
+            self.message['version'] = self.UMF_VERSION
+
+        if 'via' in message:
+            self.message['via'] = message['via']
+
+        if 'forward' in message:
+            self.message['forward'] = message['forward']
+        if 'fwd' in message:
+            self.message['forward'] = message['fwd']
+
+        if 'body' in message:
+            self.message['body'] = message['body']
+        if 'bdy' in message:
+            self.message['body'] = message['bdy']
+
+        if 'authorization' in message:
+            self.message['authorization'] = message['authorization']
+        if 'aut' in message:
+            self.message['authorization'] = message['aut']
+
         return self.message
 
 class Hydra:
@@ -99,5 +144,27 @@ class Hydra:
         self.service_version = service_version
 
         umf = UMFMessage()
-        message = umf.createMessage({})
+        message = umf.createMessage({
+            'body': {
+                'msg': 'hello there',
+                'val': 12
+            }
+        })
         pp(message)
+
+        shortMessage = umf.toShort()
+        pp(shortMessage)
+
+    async def hydra_event_loop(self):
+        while True:
+            print('periodic')
+            await asyncio.sleep(2)
+
+    async def init(self):
+        loop = asyncio.get_event_loop()
+        nest_asyncio.apply(loop)
+        task = loop.create_task(self.hydra_event_loop())
+        try:
+            loop.run_until_complete(task)
+        except asyncio.CancelledError:
+            pass

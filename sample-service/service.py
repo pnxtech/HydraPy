@@ -27,6 +27,7 @@ async def main():
     redis = await aioredis.create_redis(config['hydra']['redis']['url'], encoding='utf-8')
 
     hydra = Hydra(redis, config, service_version)
+    await hydra.init()
 
     app.run(debug=True,
             host=config['hydra']['serviceIP'] != '' or '0.0.0.0',
