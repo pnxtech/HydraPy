@@ -24,7 +24,10 @@ async def main():
     with open('./config.json', 'r', encoding='utf-8-sig') as json_file:
         config = json.load(json_file)
 
-    redis = await aioredis.create_redis(config['hydra']['redis']['url'], encoding='utf-8')
+    redis_entry = config['hydra']['redis']
+    redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
+    pp(redis_url)
+    redis = await aioredis.create_redis(redis_url, encoding='utf-8')
 
     hydra = Hydra(redis, config, service_version)
     await hydra.init()
