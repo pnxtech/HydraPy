@@ -2,3 +2,4 @@
 *.log
 scratch.*
 .vscode/
+sample-service/hydra.py

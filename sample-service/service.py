@@ -1,10 +1,16 @@
 import asyncio
+import nest_asyncio
 import aioredis
 import json
 
 from pprint import pp
 from flask import Flask, request, jsonify, make_response
 from hydra import Hydra
+
+'''
+patch asyncio to allow for nested asyncio.run and run_until_complete calls
+'''
+nest_asyncio.apply()
 
 app = Flask(__name__)
 service_version = '1.0.0'
@@ -26,7 +32,6 @@ async def main():
 
     redis_entry = config['hydra']['redis']
     redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
-    pp(redis_url)
     redis = await aioredis.create_redis(redis_url, encoding='utf-8')
 
     hydra = Hydra(redis, config, service_version)

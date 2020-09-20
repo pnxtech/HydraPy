@@ -1,61 +1,66 @@
+import os
+import socket
+import asyncio
+import json
 import uuid
 import shortuuid
 from datetime import datetime
 from pprint import pp
+
 
 class UMFMessage:
     UMF_VERSION = 'UMF/1.4.6'
     message = None
 
     def __init__(self):
-        message = {}
+        self.message = {}
 
-    def getTimeStamp(self):
+    def get_time_stamp(self):
         '''retrieve an ISO 8601 timestamp'''
         return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-    def createMessageID(self):
+    def create_message_id(self):
         '''Returns a UUID for use with messages'''
-        return uuid.uuid4()
+        return uuid.uuid4().hex
 
-    def createShortMessageID(self):
+    def create_short_message_id(self):
         '''Returns a short form UUID for use with messages'''
         return shortuuid.uuid()
 
-    def toJSON(self):
+    def to_json(self):
         '''A JSON stringifiable version of message'''
-        return message
+        return self.message
 
-    def toShort(self):
+    def to_short(self):
         '''convert a long message to a short one'''
         message = {}
-        if self.message['to']:
+        if 'to' in self.message:
             message['to'] = self.message['to']
-        if self.message['from']:
+        if 'from' in self.message:
             message['frm'] = self.message['from']
-        if self.message['headers']:
+        if 'headers' in self.message:
             message['hdr'] = self.message['headers']
-        if self.message['mid']:
+        if 'mid' in self.message:
             message['mid'] = self.message['mid']
-        if self.message['rmid']:
+        if 'rmid' in self.message:
             message['rmid'] = self.message['rmid']
-        if self.message['signature']:
+        if 'signature' in self.message:
             message['sig'] = self.message['signature']
-        if self.message['timeout']:
+        if 'timeout' in self.message:
             message['tmo'] = self.message['timeout']
-        if self.message['timestamp']:
+        if 'timestamp' in self.message:
             message['ts'] = self.message['timestamp']
-        if self.message['type']:
+        if 'type' in self.message:
             message['typ'] = self.message['type']
-        if self.message['version']:
+        if 'version' in self.message:
             message['ver'] = self.message['version']
-        if self.message['via']:
+        if 'via' in self.message:
             message['via'] = self.message['via']
-        if self.message['forward']:
+        if 'forward' in self.message:
             message['fwd'] = self.message['forward']
-        if self.message['body']:
+        if 'body' in self.message:
             message['bdy'] = self.message['body']
-        if self.message['authorization']:
+        if 'authorization' in self.message:
             message['aut'] = self.message['authorization']
         return message
 
@@ -63,41 +68,142 @@ class UMFMessage:
         '''Create a UMF message'''
         if 'to' in message:
             self.message['to'] = message['to']
-        if 'from' in message or 'frm' in message:
-            self.message['from'] = message['from'] or message['frm']
-        if 'headers' in message or 'hdr' in message:
-            self.message['headers'] = message['headers'] or message['hdr']
-        self.message['mid'] = message.mid or self.createMessageID()
+
+        if 'from' in message:
+            self.message['from'] = message['from']
+        if 'frm' in message:
+            self.message['from'] = message['frm']
+
+        if 'headers' in message:
+            self.message['headers'] = message['headers']
+        if 'hdr' in message:
+            self.message['headers'] = message['hdr']
+
+        if 'mid' in message:
+            self.message['mid'] = message.mid
+        else:
+            self.message['mid'] = self.create_message_id()
+
         if 'rmid' in message:
             self.message['rmid'] = message['rmid']
-        if 'signature' in message or 'sig' in message:
-            self.message['signature'] = message['signature'] or message['sig']
-        if 'timout' in message or 'tmo' in message:
-            self.message['timeout'] = message['timeout'] or message['tmo']
-        self.message['timestamp'] = message['timestamp'] or message['ts'] or self.getTimeStamp()
-        if 'type' in message or 'typ' in message:
-            self.message['type'] = message['type'] or message['typ']
-        self.message['version'] = message['version'] or message['ver'] or self.UMF_VERSION
+
+        if 'signature' in message:
+            self.message['signature'] = message['signature']
+        if 'sig' in message:
+            self.message['signature'] = message['sig']
+
+        if 'timout' in message:
+            self.message['timeout'] = message['timeout']
+        if 'tmo' in message:
+            self.message['timeout'] = message['tmo']
+
+        if 'timestamp' in message:
+            self.message['timestamp'] = message['timestamp']
+        elif 'ts' in message:
+            self.message['timestamp'] = message['ts']
+        else:
+            self.message['timestamp'] = self.get_time_stamp()
+
+        if 'type' in message:
+            self.message['type'] = message['type']
+        if 'typ' in message:
+            self.message['type'] = message['typ']
+
+        if 'version' in message:
+            self.message['version'] = message['version']
+        elif 'ver' in message:
+            self.message['version'] = message['ver']
+        else:
+            self.message['version'] = self.UMF_VERSION
+
         if 'via' in message:
             self.message['via'] = message['via']
-        if 'forward' in message or 'fwd' in message:
-            self.message['forward'] = message['forward'] or message['fwd']
-        if 'body' in message or 'bdy' in message:
-            self.message['body'] = message['body'] or self.message['bdy']
-        if 'authorization' in message or 'aut' in message:
-            self.message['authorization'] = message['authorization'] or self.message['aut']
+
+        if 'forward' in message:
+            self.message['forward'] = message['forward']
+        if 'fwd' in message:
+            self.message['forward'] = message['fwd']
+
+        if 'body' in message:
+            self.message['body'] = message['body']
+        if 'bdy' in message:
+            self.message['body'] = message['bdy']
+
+        if 'authorization' in message:
+            self.message['authorization'] = message['authorization']
+        if 'aut' in message:
+            self.message['authorization'] = message['aut']
+
         return self.message
 
+
 class Hydra:
+    ONE_SECOND = 1
+    ONE_WEEK_IN_SECONDS = 604800
+    PRESENCE_UPDATE_INTERVAL = ONE_SECOND
+    HEALTH_UPDATE_INTERVAL = ONE_SECOND * 5
+    KEY_EXPIRATION_TTL = ONE_SECOND * 3
+
+    redis_pre_key = 'hydra:service'
+    mc_message_key = 'hydra:service:mc'
+
     redis = None
     config = None
     service_version = ''
+    service_name = ''
+    service_port = 0
+    service_ip = '0.0.0.0'
+    service_description = ''
+    instance_id = None
 
     def __init__(self, redis, config, service_version):
         self.redis = redis
         self.config = config
+        entry = self.config['hydra']
         self.service_version = service_version
+        self.service_name = entry['serviceName']
+        self.service_port = entry['servicePort']
+        self.service_description = entry['serviceDescription']
+        self.service_type = entry['serviceType']
+        self.redis_database = entry['redis']['database']
 
+    async def presence_event_loop(self):
         umf = UMFMessage()
-        message = umf.createMessage({})
-        pp(message)
+        entry = {
+            'serviceName': self.service_name,
+            'serviceDescription': self.service_description,
+            'version': self.service_version,
+            'instanceID': self.instance_id,
+            'processID': os.getpid(),
+            'ip': self.service_ip,
+            'port': self.service_port,
+            'hostName': socket.gethostname()
+        }
+        while True:
+            #pp(f'{self.redis_pre_key}:{self.service_name}:service')
+            entry['updatedOn'] = umf.get_time_stamp()
+            tr = self.redis.multi_exec()
+            f1 = tr.setex(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:presence',
+                    self.KEY_EXPIRATION_TTL,
+                    self.instance_id)
+            f2 = tr.hset(f'{self.redis_pre_key}:nodes', self.instance_id, json.dumps(entry))
+            await tr.execute()
+            await asyncio.gather(f1, f2)
+            await asyncio.sleep(self.PRESENCE_UPDATE_INTERVAL)
+
+    async def health_check_event_loop(self):
+        while True:
+            # pp(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:health')
+            await asyncio.sleep(self.HEALTH_UPDATE_INTERVAL)
+
+    async def init(self):
+        self.instance_id = uuid.uuid4().hex
+
+        loop = asyncio.get_event_loop()
+        presence_task = loop.create_task(self.presence_event_loop())
+        check_check_task = loop.create_task(self.health_check_event_loop())
+        try:
+            loop.run_until_complete(presence_task)
+            loop.run_until_complete(check_check_task)
+        except asyncio.CancelledError:
+            pass
