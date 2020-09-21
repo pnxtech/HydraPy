@@ -2,7 +2,7 @@
 # HydraPy
 Hydra for Python
 
-Note: HydraPy requires aioredis==1.3.1 or greater
+Note: HydraPy requires Python 3.7+ and aioredis==1.3.1 or greater
 
 ## Development
 
