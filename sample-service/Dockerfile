@@ -3,7 +3,7 @@ LABEL maintainer="Carlos Justiniano cjus@ieee.org"
 EXPOSE 15000
 
 RUN apt-get update -y && \
-    apt-get install -y python3.7 python3-pip python3-dev
+    apt-get install -y python python3-pip python3-dev
 
 COPY ./requirements.txt /usr/src/app/requirements.txt
 WORKDIR /usr/src/app
