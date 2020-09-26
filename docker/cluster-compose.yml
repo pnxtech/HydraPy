@@ -48,6 +48,11 @@ services:
     image: hydrapy-sample-service:1.0.0
     networks:
       - servicenet
+    ports:
+      - target: 15000
+        published: 15000
+        protocol: tcp
+        mode: ingress
     depends_on:
       - redis
     configs:

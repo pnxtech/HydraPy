@@ -6,6 +6,7 @@ import uuid
 import shortuuid
 from datetime import datetime
 from pprint import pp
+from periodic import Periodic
 
 
 class UMFMessage:
@@ -155,6 +156,7 @@ class Hydra:
     service_ip = '0.0.0.0'
     service_description = ''
     instance_id = None
+    hydra_event_count = 0
 
     def __init__(self, redis, config, service_version):
         self.redis = redis
@@ -167,7 +169,7 @@ class Hydra:
         self.service_type = entry['serviceType']
         self.redis_database = entry['redis']['database']
 
-    async def presence_event_loop(self):
+    async def presence_event(self):
         umf = UMFMessage()
         entry = {
             'serviceName': self.service_name,
@@ -179,31 +181,28 @@ class Hydra:
             'port': self.service_port,
             'hostName': socket.gethostname()
         }
-        while True:
-            #pp(f'{self.redis_pre_key}:{self.service_name}:service')
-            entry['updatedOn'] = umf.get_time_stamp()
-            tr = self.redis.multi_exec()
-            f1 = tr.setex(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:presence',
-                    self.KEY_EXPIRATION_TTL,
-                    self.instance_id)
-            f2 = tr.hset(f'{self.redis_pre_key}:nodes', self.instance_id, json.dumps(entry))
-            await tr.execute()
-            await asyncio.gather(f1, f2)
-            await asyncio.sleep(self.PRESENCE_UPDATE_INTERVAL)
+        pp(f'{self.redis_pre_key}:{self.service_name}:service')
+        entry['updatedOn'] = umf.get_time_stamp()
+        tr = self.redis.multi_exec()
+        f1 = tr.setex(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:presence',
+                      self.KEY_EXPIRATION_TTL,
+                      self.instance_id)
+        f2 = tr.hset(f'{self.redis_pre_key}:nodes',
+                     self.instance_id, json.dumps(entry))
+        await tr.execute()
+        await asyncio.gather(f1, f2)
 
-    async def health_check_event_loop(self):
-        while True:
-            # pp(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:health')
-            await asyncio.sleep(self.HEALTH_UPDATE_INTERVAL)
+    async def health_check_event(self):
+        pp(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:health')
+
+    async def hydra_event_loop(self):
+        await self.presence_event()
+        self.hydra_event_count = self.hydra_event_count + 1
+        if self.hydra_event_count % self.HEALTH_UPDATE_INTERVAL == 0:
+            self.hydra_event_count = 0
+            await self.health_check_event()
 
     async def init(self):
         self.instance_id = uuid.uuid4().hex
-
-        loop = asyncio.get_event_loop()
-        presence_task = loop.create_task(self.presence_event_loop())
-        check_check_task = loop.create_task(self.health_check_event_loop())
-        try:
-            loop.run_until_complete(presence_task)
-            loop.run_until_complete(check_check_task)
-        except asyncio.CancelledError:
-            pass
+        p = Periodic(1, self.hydra_event_loop)
+        await p.start()
