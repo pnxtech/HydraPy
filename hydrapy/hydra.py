@@ -1,3 +1,21 @@
+# MIT License
+# Copyright (c) 2020 Carlos Justiniano, and Contributors
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import os
 import socket
 import asyncio
@@ -138,71 +156,71 @@ class UMFMessage:
         return self.message
 
 
-class Hydra:
-    ONE_SECOND = 1
-    ONE_WEEK_IN_SECONDS = 604800
-    PRESENCE_UPDATE_INTERVAL = ONE_SECOND
-    HEALTH_UPDATE_INTERVAL = ONE_SECOND * 5
-    KEY_EXPIRATION_TTL = ONE_SECOND * 3
+class HydraPy:
+    _ONE_SECOND = 1
+    _ONE_WEEK_IN_SECONDS = 604800
+    _PRESENCE_UPDATE_INTERVAL = _ONE_SECOND
+    _HEALTH_UPDATE_INTERVAL = _ONE_SECOND * 5
+    _KEY_EXPIRATION_TTL = _ONE_SECOND * 3
 
-    redis_pre_key = 'hydra:service'
-    mc_message_key = 'hydra:service:mc'
+    _redis_pre_key = 'hydra:service'
+    _mc_message_key = 'hydra:service:mc'
 
-    redis = None
-    config = None
-    service_version = ''
-    service_name = ''
-    service_port = 0
-    service_ip = '0.0.0.0'
-    service_description = ''
-    instance_id = None
-    hydra_event_count = 0
+    _redis = None
+    _config = None
+    _service_version = ''
+    _service_name = ''
+    _service_port = 0
+    _service_ip = '0.0.0.0'
+    _service_description = ''
+    _instance_id = None
+    _hydra_event_count = 0
 
     def __init__(self, redis, config, service_version):
-        self.redis = redis
-        self.config = config
-        entry = self.config['hydra']
-        self.service_version = service_version
-        self.service_name = entry['serviceName']
-        self.service_port = entry['servicePort']
-        self.service_description = entry['serviceDescription']
-        self.service_type = entry['serviceType']
-        self.redis_database = entry['redis']['database']
+        self._redis = redis
+        self._config = config
+        entry = self._config['hydra']
+        self._service_version = service_version
+        self._service_name = entry['serviceName']
+        self._service_port = entry['servicePort']
+        self._service_description = entry['serviceDescription']
+        self._service_type = entry['serviceType']
+        self._redis_database = entry['redis']['database']
 
-    async def presence_event(self):
+    async def _presence_event(self):
         umf = UMFMessage()
         entry = {
-            'serviceName': self.service_name,
-            'serviceDescription': self.service_description,
-            'version': self.service_version,
-            'instanceID': self.instance_id,
+            'serviceName': self._service_name,
+            'serviceDescription': self._service_description,
+            'version': self._service_version,
+            'instanceID': self._instance_id,
             'processID': os.getpid(),
-            'ip': self.service_ip,
-            'port': self.service_port,
+            'ip': self._service_ip,
+            'port': self._service_port,
             'hostName': socket.gethostname()
         }
-        pp(f'{self.redis_pre_key}:{self.service_name}:service')
+        pp(f'{self._redis_pre_key}:{self._service_name}:service')
         entry['updatedOn'] = umf.get_time_stamp()
-        tr = self.redis.multi_exec()
-        f1 = tr.setex(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:presence',
-                      self.KEY_EXPIRATION_TTL,
-                      self.instance_id)
-        f2 = tr.hset(f'{self.redis_pre_key}:nodes',
-                     self.instance_id, json.dumps(entry))
+        tr = self._redis.multi_exec()
+        f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:presence',
+                      self._KEY_EXPIRATION_TTL,
+                      self._instance_id)
+        f2 = tr.hset(f'{self._redis_pre_key}:nodes',
+                     self._instance_id, json.dumps(entry))
         await tr.execute()
         await asyncio.gather(f1, f2)
 
-    async def health_check_event(self):
-        pp(f'{self.redis_pre_key}:{self.service_name}:{self.instance_id}:health')
+    async def _health_check_event(self):
+        pp(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health')
 
-    async def hydra_event_loop(self):
-        await self.presence_event()
-        self.hydra_event_count = self.hydra_event_count + 1
-        if self.hydra_event_count % self.HEALTH_UPDATE_INTERVAL == 0:
-            self.hydra_event_count = 0
-            await self.health_check_event()
+    async def _hydra_events(self):
+        await self._presence_event()
+        self._hydra_event_count = self._hydra_event_count + 1
+        if self._hydra_event_count % self._HEALTH_UPDATE_INTERVAL == 0:
+            self._hydra_event_count = 0
+            await self._health_check_event()
 
     async def init(self):
-        self.instance_id = uuid.uuid4().hex
-        p = Periodic(1, self.hydra_event_loop)
+        self._instance_id = uuid.uuid4().hex
+        p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
         await p.start()

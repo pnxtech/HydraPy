@@ -7,7 +7,7 @@ from quart.logging import create_serving_logger
 from hypercorn.config import Config
 from hypercorn.asyncio import serve
 from pprint import pp
-from hydra import Hydra
+from hydra import HydraPy
 
 app = Quart(__name__)
 service_version = '1.0.0'
@@ -40,7 +40,7 @@ async def main():
     redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
     redis = await aioredis.create_redis(redis_url, encoding='utf-8')
 
-    hydra = Hydra(redis, hydra_config, service_version)
+    hydra = HydraPy(redis, hydra_config, service_version)
     await hydra.init()
 
     loop = asyncio.get_event_loop()
