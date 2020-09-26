@@ -198,7 +198,52 @@ class HydraPy:
         self._service_type = entry['serviceType']
         self._redis_database = entry['redis']['database']
 
+    def get_service_name(self):
+        return self._service_name
+
+    def get_server_instance_id(self):
+        return self._instance_id
+
+    def get_health(self):
+        pid = os.getpid()
+        p = psutil.Process(pid)
+        return {
+            'serviceName': self._service_name,
+            'instanceID': self._instance_id,
+            'hostName': socket.gethostname(),
+            'sampledOn': (UMFMessage()).get_time_stamp(),
+            'processID': pid,
+            'architecture': f'{platform.machine()}',
+            'platform': f'{platform.system()}',
+            'nodeVersion': f'{platform.python_implementation()} {platform.python_version()}',
+            'memory': {
+                'rss': p.memory_info()[0],
+                'heapTotal': p.memory_info()[1],
+                'heapUsed': '',
+                'external': ''
+            },
+            'uptimeSeconds': time.time() - psutil.boot_time()
+        }
+
+    async def _register_service(self):
+        service_entry = {
+            'serviceName': self._service_name,
+            'type': self._service_type,
+            'registeredOn': (UMFMessage()).get_time_stamp()
+        }
+        tr = self._redis.multi_exec()
+        f1 = tr.set(f'{self._redis_pre_key}:{self._service_name}:service',
+                    json.dumps(service_entry))
+        await tr.execute()
+        await asyncio.gather(f1)
+        return {
+            'serviceName': self._service_name,
+            'serviceIP': self._service_ip,
+            'servicePort': self._service_port
+        }
+
     async def _presence_event(self):
+        pp(f'{self._redis_pre_key}:{self._service_name}:service')
         umf = UMFMessage()
         entry = {
             'serviceName': self._service_name,
@@ -210,7 +255,6 @@ class HydraPy:
             'port': self._service_port,
             'hostName': socket.gethostname()
         }
-        pp(f'{self._redis_pre_key}:{self._service_name}:service')
         entry['updatedOn'] = umf.get_time_stamp()
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:presence',
@@ -241,26 +285,7 @@ class HydraPy:
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
+        await self._register_service()
         p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
         await p.start()
 
-    def get_health(self):
-        pid = os.getpid()
-        p = psutil.Process(pid)
-        return {
-            'serviceName': self._service_name,
-            'instanceID': self._instance_id,
-            'hostName': socket.gethostname(),
-            'sampledOn': (UMFMessage()).get_time_stamp(),
-            'processID': pid,
-            'architecture': f'{platform.machine()}',
-            'platform': f'{platform.system()}',
-            'nodeVersion': f'{platform.python_implementation()} {platform.python_version()}',
-            'memory': {
-                'rss': p.memory_info()[0],
-                'heapTotal': p.memory_info()[1],
-                'heapUsed': '',
-                'external': ''
-            },
-            'uptimeSeconds': time.time() - psutil.boot_time()
-        }
