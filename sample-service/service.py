@@ -1,7 +1,8 @@
 import asyncio
 import aioredis
 import json
-
+import os
+import socket
 from quart import Quart
 from quart.logging import create_serving_logger
 from hypercorn.config import Config
@@ -26,9 +27,11 @@ async def version():
 async def main():
     with open('./config.json', 'r', encoding='utf-8-sig') as json_file:
         hydra_config = json.load(json_file)
-    ip_addr = '0.0.0.0'
+
     if hydra_config['hydra']['serviceIP'] != '':
         ip_addr = hydra_config['hydra']['serviceIP']
+    else:
+        ip_addr = socket.gethostbyname(socket.gethostname())
 
     config = Config()
     config.bind = [f"{ip_addr}:{hydra_config['hydra']['servicePort']}"]
@@ -44,8 +47,8 @@ async def main():
     await hydra.init()
 
     loop = asyncio.get_event_loop()
-    s = loop.create_task(serve(app, config))
-    await s
+    await loop.create_task(serve(app, config))
+
     redis.close()
     await redis.wait_closed()
 

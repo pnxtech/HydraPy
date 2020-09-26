@@ -17,6 +17,9 @@
 # SOFTWARE.
 
 import os
+import time
+import platform
+import psutil
 import socket
 import asyncio
 import json
@@ -171,7 +174,7 @@ class HydraPy:
     _service_version = ''
     _service_name = ''
     _service_port = 0
-    _service_ip = '0.0.0.0'
+    _service_ip = ''
     _service_description = ''
     _instance_id = None
     _hydra_event_count = 0
@@ -182,6 +185,14 @@ class HydraPy:
         entry = self._config['hydra']
         self._service_version = service_version
         self._service_name = entry['serviceName']
+
+        # TODO: handle DNS names
+        if entry['serviceIP'] != '':
+            self._service_ip = entry['serviceIP']
+        else:
+            ip = socket.gethostbyname(socket.gethostname())
+            self._service_ip = ip
+
         self._service_port = entry['servicePort']
         self._service_description = entry['serviceDescription']
         self._service_type = entry['serviceType']
@@ -212,6 +223,14 @@ class HydraPy:
 
     async def _health_check_event(self):
         pp(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health')
+        tr = self._redis.multi_exec()
+        f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health',
+                      self._KEY_EXPIRATION_TTL,
+                      json.dumps(self.get_health()))
+        f2 = tr.expire(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health:log',
+                       self._ONE_WEEK_IN_SECONDS)
+        await tr.execute()
+        await asyncio.gather(f1, f2)
 
     async def _hydra_events(self):
         await self._presence_event()
@@ -224,3 +243,24 @@ class HydraPy:
         self._instance_id = uuid.uuid4().hex
         p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
         await p.start()
+
+    def get_health(self):
+        pid = os.getpid()
+        p = psutil.Process(pid)
+        return {
+            'serviceName': self._service_name,
+            'instanceID': self._instance_id,
+            'hostName': socket.gethostname(),
+            'sampledOn': (UMFMessage()).get_time_stamp(),
+            'processID': pid,
+            'architecture': f'{platform.machine()}',
+            'platform': f'{platform.system()}',
+            'nodeVersion': f'{platform.python_implementation()} {platform.python_version()}',
+            'memory': {
+                'rss': p.memory_info()[0],
+                'heapTotal': p.memory_info()[1],
+                'heapUsed': '',
+                'external': ''
+            },
+            'uptimeSeconds': time.time() - psutil.boot_time()
+        }
