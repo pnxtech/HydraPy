@@ -57,7 +57,7 @@ class UMFMessage:
             message['to'] = self._message['to']
         if 'from' in self._message:
             message['frm'] = self._message['from']
-        if 'headers' in self.message:
+        if 'headers' in self._message:
             message['hdr'] = self._message['headers']
         if 'mid' in self._message:
             message['mid'] = self._message['mid']
@@ -104,7 +104,7 @@ class UMFMessage:
             self._message['mid'] = self.create_message_id()
 
         if 'rmid' in message:
-            self.message['rmid'] = message['rmid']
+            self._message['rmid'] = message['rmid']
 
         if 'signature' in message:
             self._message['signature'] = message['signature']
