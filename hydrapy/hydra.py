@@ -28,11 +28,11 @@ from periodic import Periodic
 
 
 class UMFMessage:
-    UMF_VERSION = 'UMF/1.4.6'
-    message = None
+    _UMF_VERSION = 'UMF/1.4.6'
+    _message = None
 
     def __init__(self):
-        self.message = {}
+        self._message = {}
 
     def get_time_stamp(self):
         '''retrieve an ISO 8601 timestamp'''
@@ -48,112 +48,112 @@ class UMFMessage:
 
     def to_json(self):
         '''A JSON stringifiable version of message'''
-        return self.message
+        return self._message
 
     def to_short(self):
         '''convert a long message to a short one'''
         message = {}
-        if 'to' in self.message:
-            message['to'] = self.message['to']
-        if 'from' in self.message:
-            message['frm'] = self.message['from']
+        if 'to' in self._message:
+            message['to'] = self._message['to']
+        if 'from' in self._message:
+            message['frm'] = self._message['from']
         if 'headers' in self.message:
-            message['hdr'] = self.message['headers']
-        if 'mid' in self.message:
-            message['mid'] = self.message['mid']
-        if 'rmid' in self.message:
-            message['rmid'] = self.message['rmid']
-        if 'signature' in self.message:
-            message['sig'] = self.message['signature']
-        if 'timeout' in self.message:
-            message['tmo'] = self.message['timeout']
-        if 'timestamp' in self.message:
-            message['ts'] = self.message['timestamp']
-        if 'type' in self.message:
-            message['typ'] = self.message['type']
-        if 'version' in self.message:
-            message['ver'] = self.message['version']
-        if 'via' in self.message:
-            message['via'] = self.message['via']
-        if 'forward' in self.message:
-            message['fwd'] = self.message['forward']
-        if 'body' in self.message:
-            message['bdy'] = self.message['body']
-        if 'authorization' in self.message:
-            message['aut'] = self.message['authorization']
+            message['hdr'] = self._message['headers']
+        if 'mid' in self._message:
+            message['mid'] = self._message['mid']
+        if 'rmid' in self._message:
+            message['rmid'] = self._message['rmid']
+        if 'signature' in self._message:
+            message['sig'] = self._message['signature']
+        if 'timeout' in self._message:
+            message['tmo'] = self._message['timeout']
+        if 'timestamp' in self._message:
+            message['ts'] = self._message['timestamp']
+        if 'type' in self._message:
+            message['typ'] = self._message['type']
+        if 'version' in self._message:
+            message['ver'] = self._message['version']
+        if 'via' in self._message:
+            message['via'] = self._message['via']
+        if 'forward' in self._message:
+            message['fwd'] = self._message['forward']
+        if 'body' in self._message:
+            message['bdy'] = self._message['body']
+        if 'authorization' in self._message:
+            message['aut'] = self._message['authorization']
         return message
 
     def createMessage(self, message):
         '''Create a UMF message'''
         if 'to' in message:
-            self.message['to'] = message['to']
+            self._message['to'] = message['to']
 
         if 'from' in message:
-            self.message['from'] = message['from']
+            self._message['from'] = message['from']
         if 'frm' in message:
-            self.message['from'] = message['frm']
+            self._message['from'] = message['frm']
 
         if 'headers' in message:
-            self.message['headers'] = message['headers']
+            self._message['headers'] = message['headers']
         if 'hdr' in message:
-            self.message['headers'] = message['hdr']
+            self._message['headers'] = message['hdr']
 
         if 'mid' in message:
-            self.message['mid'] = message.mid
+            self._message['mid'] = message.mid
         else:
-            self.message['mid'] = self.create_message_id()
+            self._message['mid'] = self.create_message_id()
 
         if 'rmid' in message:
             self.message['rmid'] = message['rmid']
 
         if 'signature' in message:
-            self.message['signature'] = message['signature']
+            self._message['signature'] = message['signature']
         if 'sig' in message:
-            self.message['signature'] = message['sig']
+            self._message['signature'] = message['sig']
 
         if 'timout' in message:
-            self.message['timeout'] = message['timeout']
+            self._message['timeout'] = message['timeout']
         if 'tmo' in message:
-            self.message['timeout'] = message['tmo']
+            self._message['timeout'] = message['tmo']
 
         if 'timestamp' in message:
-            self.message['timestamp'] = message['timestamp']
+            self._message['timestamp'] = message['timestamp']
         elif 'ts' in message:
-            self.message['timestamp'] = message['ts']
+            self._message['timestamp'] = message['ts']
         else:
-            self.message['timestamp'] = self.get_time_stamp()
+            self._message['timestamp'] = self.get_time_stamp()
 
         if 'type' in message:
-            self.message['type'] = message['type']
+            self._message['type'] = message['type']
         if 'typ' in message:
-            self.message['type'] = message['typ']
+            self._message['type'] = message['typ']
 
         if 'version' in message:
-            self.message['version'] = message['version']
+            self._message['version'] = message['version']
         elif 'ver' in message:
-            self.message['version'] = message['ver']
+            self._message['version'] = message['ver']
         else:
-            self.message['version'] = self.UMF_VERSION
+            self._message['version'] = self._UMF_VERSION
 
         if 'via' in message:
-            self.message['via'] = message['via']
+            self._message['via'] = message['via']
 
         if 'forward' in message:
-            self.message['forward'] = message['forward']
+            self._message['forward'] = message['forward']
         if 'fwd' in message:
-            self.message['forward'] = message['fwd']
+            self._message['forward'] = message['fwd']
 
         if 'body' in message:
-            self.message['body'] = message['body']
+            self._message['body'] = message['body']
         if 'bdy' in message:
-            self.message['body'] = message['bdy']
+            self._message['body'] = message['bdy']
 
         if 'authorization' in message:
-            self.message['authorization'] = message['authorization']
+            self._message['authorization'] = message['authorization']
         if 'aut' in message:
-            self.message['authorization'] = message['aut']
+            self._message['authorization'] = message['aut']
 
-        return self.message
+        return self._message
 
 
 class HydraPy:
