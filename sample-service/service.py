@@ -1,46 +1,51 @@
 import asyncio
-import nest_asyncio
 import aioredis
 import json
 
+from quart import Quart
+from quart.logging import create_serving_logger
+from hypercorn.config import Config
+from hypercorn.asyncio import serve
 from pprint import pp
-from flask import Flask, request, jsonify, make_response
 from hydra import Hydra
 
-'''
-patch asyncio to allow for nested asyncio.run and run_until_complete calls
-'''
-nest_asyncio.apply()
-
-app = Flask(__name__)
+app = Quart(__name__)
 service_version = '1.0.0'
 
 
 @app.route('/', methods=['GET'])
-def home():
+async def home():
     return 'HydraPy Sample Service version ' + service_version
 
 
 @app.route('/v1/hydrapy/version', methods=['GET'])
-def version():
-    return make_response(jsonify({"version": service_version}), 200)
+async def version():
+    return {"version": service_version}
 
 
 async def main():
     with open('./config.json', 'r', encoding='utf-8-sig') as json_file:
-        config = json.load(json_file)
+        hydra_config = json.load(json_file)
+    ip_addr = '0.0.0.0'
+    if hydra_config['hydra']['serviceIP'] != '':
+        ip_addr = hydra_config['hydra']['serviceIP']
 
-    redis_entry = config['hydra']['redis']
+    config = Config()
+    config.bind = [f"{ip_addr}:{hydra_config['hydra']['servicePort']}"]
+    config.access_log_format = '%(h)s %(r)s %(s)s %(b)s %(D)s'
+    config.accesslog = create_serving_logger()
+    config.errorlog = config.accesslog
+
+    redis_entry = hydra_config['hydra']['redis']
     redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
     redis = await aioredis.create_redis(redis_url, encoding='utf-8')
 
-    hydra = Hydra(redis, config, service_version)
+    hydra = Hydra(redis, hydra_config, service_version)
     await hydra.init()
 
-    app.run(debug=True,
-            host=config['hydra']['serviceIP'] != '' or '0.0.0.0',
-            port=config['hydra']['servicePort'])
-
+    loop = asyncio.get_event_loop()
+    s = loop.create_task(serve(app, config))
+    await s
     redis.close()
     await redis.wait_closed()
 
