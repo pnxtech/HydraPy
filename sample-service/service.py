@@ -34,7 +34,7 @@ async def main():
 
     redis_entry = hydra_config['hydra']['redis']
     redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
-    redis = await aioredis.create_redis(redis_url, encoding='utf-8')
+    redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
 
     hydra = HydraPy(redis, hydra_config)
     await hydra.init()
@@ -58,6 +58,11 @@ async def main():
         }
 
     await hydra.register_routes()
+
+    async def message_handler(message):
+        pp(message)
+
+    await hydra.register_message_handler(message_handler)
 
     print(f"{si['serviceName']}({si['instanceID']})(v{si['serviceVersion']}) running at {si['serviceIP']}:{si['servicePort']}")
     await startQuart(si)

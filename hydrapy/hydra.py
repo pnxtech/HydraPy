@@ -89,6 +89,7 @@ class UMFMessage:
 
     def createMessage(self, message):
         '''Create a UMF message'''
+
         if 'to' in message:
             self._message['to'] = message['to']
 
@@ -103,7 +104,7 @@ class UMFMessage:
             self._message['headers'] = message['hdr']
 
         if 'mid' in message:
-            self._message['mid'] = message.mid
+            self._message['mid'] = message['mid']
         else:
             self._message['mid'] = self.create_message_id()
 
@@ -187,6 +188,8 @@ class HydraPy:
     _instance_id = None
     _hydra_event_count = 0
     _hydra_routes = []
+
+    _message_handler = None
 
     def __init__(self, redis, config):
         self._redis = redis
@@ -274,6 +277,9 @@ class HydraPy:
             tr.sadd(key, route)
         await tr.execute()
 
+    async def register_message_handler(self, message_handler):
+        self._message_handler = message_handler
+
     async def _register_service(self):
         service_entry = {
             'serviceName': self._service_name,
@@ -285,6 +291,20 @@ class HydraPy:
                     json.dumps(service_entry))
         await tr.execute()
         await asyncio.gather(f1)
+
+        async def _message_reader(channel):
+            umf = UMFMessage()
+            while (await channel.wait_message()):
+                if self._message_handler:
+                    msg = await channel.get_json()
+                    msg = umf.createMessage(msg)
+                    asyncio.ensure_future(self._message_handler(msg))
+
+        ch1 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}')
+        ch2 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}:{self._instance_id}')
+        asyncio.ensure_future(_message_reader(ch1[0]))
+        asyncio.ensure_future(_message_reader(ch2[0]))
+
         return {
             'serviceName': self._service_name,
             'serviceIP': self._service_ip,
