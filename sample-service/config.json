@@ -1,6 +1,7 @@
 {
     "hydra": {
-        "serviceName": "hydrapy-sample-service",
+        "serviceName": "sample",
+        "serviceVersion": "1.0.0",
         "serviceIP": "",
         "servicePort": 15000,
         "serviceType": "example",

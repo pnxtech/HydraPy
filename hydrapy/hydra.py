@@ -25,6 +25,7 @@ import asyncio
 import json
 import uuid
 import shortuuid
+
 from datetime import datetime
 from pprint import pp
 from periodic import Periodic
@@ -159,6 +160,13 @@ class UMFMessage:
         return self._message
 
 
+_routes = []
+
+
+def hydra_route(*args, **kwargs):
+    _routes.append(args)
+
+
 class HydraPy:
     _ONE_SECOND = 1
     _ONE_WEEK_IN_SECONDS = 604800
@@ -180,11 +188,14 @@ class HydraPy:
     _hydra_event_count = 0
     _hydra_routes = []
 
-    def __init__(self, redis, config, service_version):
+    def __init__(self, redis, config):
         self._redis = redis
         self._config = config
         entry = self._config['hydra']
-        self._service_version = service_version
+        if 'serviceVersion' in entry:
+            self._service_version = entry['serviceVersion']
+        else:
+            self._service_version = '0.0.0'
         self._service_name = entry['serviceName']
 
         # TODO: handle DNS names
@@ -204,6 +215,24 @@ class HydraPy:
 
     def get_server_instance_id(self):
         return self._instance_id
+
+    def get_service_port(self):
+        return self._service_port
+
+    def get_service_ip(self):
+        return self._service_ip
+
+    def get_service_version(self):
+        return self._service_version
+
+    def get_service_info(self):
+        return {
+            'serviceName': self._service_name,
+            'servicePort': self._service_port,
+            'serviceIP': self._service_ip,
+            'instanceID': self._instance_id,
+            'serviceVersion': self._service_version,
+        }
 
     def get_health(self):
         pid = os.getpid()
@@ -229,7 +258,7 @@ class HydraPy:
     async def _flush_routes(self):
         await self._redis.delete(f'{self._redis_pre_key}:{self._service_name}:service:routes')
 
-    async def register_routes(self, routes):
+    async def register_routes(self):
         await self._flush_routes()
         key = f'{self._redis_pre_key}:{self._service_name}:service:routes'
         self._hydra_routes = [
@@ -237,11 +266,9 @@ class HydraPy:
             f'[get]/{self._service_name}/',
             f'[get]/{self._service_name}/:rest'
         ]
-        for route in routes:
+        for route in _routes:
             for method in route[1]:
                 self._hydra_routes.append(f'[{method.lower()}]{route[0]}')
-        pp(self._hydra_routes)
-
         tr = self._redis.multi_exec()
         for route in self._hydra_routes:
             tr.sadd(key, route)
@@ -265,7 +292,6 @@ class HydraPy:
         }
 
     async def _presence_event(self):
-        pp(f'{self._redis_pre_key}:{self._service_name}:service')
         umf = UMFMessage()
         entry = {
             'serviceName': self._service_name,
@@ -288,7 +314,6 @@ class HydraPy:
         await asyncio.gather(f1, f2)
 
     async def _health_check_event(self):
-        pp(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health')
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health',
                       self._KEY_EXPIRATION_TTL,

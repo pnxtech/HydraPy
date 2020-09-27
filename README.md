@@ -23,6 +23,45 @@ The following describes the approach:
 
 ---
 
+## Usage
+
+#### Import
+
+```python
+from hydra import HydraPy
+from hydra import hydra_route
+```
+
+#### Route registration
+
+Routes which do not require HydraPy functions can be defined as:
+
+```python
+hydra_route('/', ['GET'])
+@app.route('/', methods=['GET'])
+async def home():
+    return 'Sample Service'
+```
+
+Note we still call the hydra_route function so that HydraPy will know about this function even if the function itself does not call HydraPy functions. This is required for routing.
+
+Routes that do depend on HydraPy must be declared after HydraPy has been initialized.
+
+```python
+hydra = HydraPy(redis, hydra_config)
+await hydra.init()
+
+hydra_route('/v1/sample/health', ['GET'])
+@app.route('/v1/sample/health', methods=['GET'])
+async def health():
+    return {
+        'result': hydra.get_health()
+    }
+
+await hydra.register_routes()
+```
+
+---
 ## Development
 
 ### Build the sample-service
