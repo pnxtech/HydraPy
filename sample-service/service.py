@@ -12,16 +12,17 @@ from hydra import HydraPy
 
 app = Quart(__name__)
 service_version = '1.0.0'
+routes = []
 
-
+routes.append(('/', ['GET']))
 @app.route('/', methods=['GET'])
 async def home():
     return 'HydraPy Sample Service version ' + service_version
 
-
+routes.append(('/v1/hydrapy/version', ['GET']))
 @app.route('/v1/hydrapy/version', methods=['GET'])
 async def version():
-    return {"version": service_version}
+    return {'version': service_version}
 
 
 async def main():
@@ -45,6 +46,12 @@ async def main():
 
     hydra = HydraPy(redis, hydra_config, service_version)
     await hydra.init()
+    await hydra.register_routes(routes)
+
+    routes.append(('/v1/hydrapy/health', ['GET']))
+    @app.route('/v1/hydrapy/health', methods=['GET'])
+    async def health():
+        return hydra.get_health()
 
     loop = asyncio.get_event_loop()
     await loop.create_task(serve(app, config))

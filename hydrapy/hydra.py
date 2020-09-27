@@ -178,6 +178,7 @@ class HydraPy:
     _service_description = ''
     _instance_id = None
     _hydra_event_count = 0
+    _hydra_routes = []
 
     def __init__(self, redis, config, service_version):
         self._redis = redis
@@ -224,6 +225,27 @@ class HydraPy:
             },
             'uptimeSeconds': time.time() - psutil.boot_time()
         }
+
+    async def _flush_routes(self):
+        await self._redis.delete(f'{self._redis_pre_key}:{self._service_name}:service:routes')
+
+    async def register_routes(self, routes):
+        await self._flush_routes()
+        key = f'{self._redis_pre_key}:{self._service_name}:service:routes'
+        self._hydra_routes = [
+            f'[get]/{self._service_name}',
+            f'[get]/{self._service_name}/',
+            f'[get]/{self._service_name}/:rest'
+        ]
+        for route in routes:
+            for method in route[1]:
+                self._hydra_routes.append(f'[{method.lower()}]{route[0]}')
+        pp(self._hydra_routes)
+
+        tr = self._redis.multi_exec()
+        for route in self._hydra_routes:
+            tr.sadd(key, route)
+        await tr.execute()
 
     async def _register_service(self):
         service_entry = {
@@ -288,4 +310,3 @@ class HydraPy:
         await self._register_service()
         p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
         await p.start()
-
