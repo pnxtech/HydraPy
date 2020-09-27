@@ -38,15 +38,15 @@ class UMFMessage:
     def __init__(self):
         self._message = {}
 
-    def get_time_stamp(self):
+    def get_time_stamp():
         '''retrieve an ISO 8601 timestamp'''
         return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-    def create_message_id(self):
+    def create_message_id():
         '''Returns a UUID for use with messages'''
         return uuid.uuid4().hex
 
-    def create_short_message_id(self):
+    def create_short_message_id():
         '''Returns a short form UUID for use with messages'''
         return shortuuid.uuid()
 
@@ -89,7 +89,6 @@ class UMFMessage:
 
     def createMessage(self, message):
         '''Create a UMF message'''
-
         if 'to' in message:
             self._message['to'] = message['to']
 
@@ -106,7 +105,7 @@ class UMFMessage:
         if 'mid' in message:
             self._message['mid'] = message['mid']
         else:
-            self._message['mid'] = self.create_message_id()
+            self._message['mid'] = UMFMessage.create_message_id()
 
         if 'rmid' in message:
             self._message['rmid'] = message['rmid']
@@ -126,7 +125,7 @@ class UMFMessage:
         elif 'ts' in message:
             self._message['timestamp'] = message['ts']
         else:
-            self._message['timestamp'] = self.get_time_stamp()
+            self._message['timestamp'] = UMFMessage.get_time_stamp()
 
         if 'type' in message:
             self._message['type'] = message['type']
@@ -244,7 +243,7 @@ class HydraPy:
             'serviceName': self._service_name,
             'instanceID': self._instance_id,
             'hostName': socket.gethostname(),
-            'sampledOn': (UMFMessage()).get_time_stamp(),
+            'sampledOn': UMFMessage.get_time_stamp(),
             'processID': pid,
             'architecture': f'{platform.machine()}',
             'platform': f'{platform.system()}',
@@ -284,7 +283,7 @@ class HydraPy:
         service_entry = {
             'serviceName': self._service_name,
             'type': self._service_type,
-            'registeredOn': (UMFMessage()).get_time_stamp()
+            'registeredOn': UMFMessage.get_time_stamp()
         }
         tr = self._redis.multi_exec()
         f1 = tr.set(f'{self._redis_pre_key}:{self._service_name}:service',
@@ -293,11 +292,10 @@ class HydraPy:
         await asyncio.gather(f1)
 
         async def _message_reader(channel):
-            umf = UMFMessage()
             while (await channel.wait_message()):
                 if self._message_handler:
                     msg = await channel.get_json()
-                    msg = umf.createMessage(msg)
+                    msg = (UMFMessage()).createMessage(msg)
                     asyncio.ensure_future(self._message_handler(msg))
 
         ch1 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}')
@@ -312,7 +310,6 @@ class HydraPy:
         }
 
     async def _presence_event(self):
-        umf = UMFMessage()
         entry = {
             'serviceName': self._service_name,
             'serviceDescription': self._service_description,
@@ -323,7 +320,7 @@ class HydraPy:
             'port': self._service_port,
             'hostName': socket.gethostname()
         }
-        entry['updatedOn'] = umf.get_time_stamp()
+        entry['updatedOn'] = UMFMessage.get_time_stamp()
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:presence',
                       self._KEY_EXPIRATION_TTL,
