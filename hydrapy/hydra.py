@@ -33,7 +33,7 @@ from pprint import pp
 from periodic import Periodic
 
 
-class UMFMessage:
+class UMF_Message:
     _UMF_VERSION = 'UMF/1.4.6'
     _message = None
 
@@ -89,7 +89,7 @@ class UMFMessage:
             message['aut'] = self._message['authorization']
         return message
 
-    def createMessage(self, message):
+    def create_message(self, message):
         '''Create a UMF message'''
         if 'to' in message:
             self._message['to'] = message['to']
@@ -107,7 +107,7 @@ class UMFMessage:
         if 'mid' in message:
             self._message['mid'] = message['mid']
         else:
-            self._message['mid'] = UMFMessage.create_message_id()
+            self._message['mid'] = UMF_Message.create_message_id()
 
         if 'rmid' in message:
             self._message['rmid'] = message['rmid']
@@ -127,7 +127,7 @@ class UMFMessage:
         elif 'ts' in message:
             self._message['timestamp'] = message['ts']
         else:
-            self._message['timestamp'] = UMFMessage.get_time_stamp()
+            self._message['timestamp'] = UMF_Message.get_time_stamp()
 
         if 'type' in message:
             self._message['type'] = message['type']
@@ -287,7 +287,7 @@ class HydraPy:
             'serviceName': self._service_name,
             'instanceID': self._instance_id,
             'hostName': socket.gethostname(),
-            'sampledOn': UMFMessage.get_time_stamp(),
+            'sampledOn': UMF_Message.get_time_stamp(),
             'processID': pid,
             'architecture': f'{platform.machine()}',
             'platform': f'{platform.system()}',
@@ -304,7 +304,7 @@ class HydraPy:
     async def send_message(self, umf_message):
         # blind send message via Redis pub/sub
         #TODO add hydra checks for available services and ability to perform a non broadcast
-        parsed_route = UMFMessage.parse_route(umf_message['to'])
+        parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = ''
         if parse_route['instance']:
             key = f"{self._mc_message_key}:{parse_route['service_name']}:{parse_route['instance']}"
@@ -331,7 +331,7 @@ class HydraPy:
             tr.sadd(key, route)
         await tr.execute()
 
-        msg = (UMFMessage()).createMessage({
+        msg = (UMF_Message()).create_message({
             'to': 'hydra-router:/refresh',
             'from': f'{self._service_name}:/',
             'body': {
@@ -348,7 +348,7 @@ class HydraPy:
         service_entry = {
             'serviceName': self._service_name,
             'type': self._service_type,
-            'registeredOn': UMFMessage.get_time_stamp()
+            'registeredOn': UMF_Message.get_time_stamp()
         }
         tr = self._redis.multi_exec()
         f1 = tr.set(f'{self._redis_pre_key}:{self._service_name}:service',
@@ -360,7 +360,7 @@ class HydraPy:
             while (await channel.wait_message()):
                 if self._message_handler:
                     msg = await channel.get_json()
-                    msg = (UMFMessage()).createMessage(msg)
+                    msg = (UMF_Message()).create_message(msg)
                     asyncio.ensure_future(self._message_handler(msg))
 
         ch1 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}')
@@ -385,7 +385,7 @@ class HydraPy:
             'port': self._service_port,
             'hostName': socket.gethostname()
         }
-        entry['updatedOn'] = UMFMessage.get_time_stamp()
+        entry['updatedOn'] = UMF_Message.get_time_stamp()
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:presence',
                       self._KEY_EXPIRATION_TTL,
