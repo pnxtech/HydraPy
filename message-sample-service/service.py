@@ -38,7 +38,6 @@ async def main():
     hydra_route('/v1/message/send', ['GET'])
     @app.route('/v1/message/send', methods=['GET'])
     async def send():
-        print(si)
         msg = (UMF_Message()).create_message({
             'to': 'sample:/',
             'from': f"{si['serviceName']}:/",
@@ -51,7 +50,6 @@ async def main():
         return {
             'result': {}
         }
-
     await hydra.register_routes()
     await startQuart(si)
 
