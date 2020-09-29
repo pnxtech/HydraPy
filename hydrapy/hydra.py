@@ -23,6 +23,7 @@ import time
 import platform
 import psutil
 import socket
+import re
 import json
 import uuid
 import shortuuid
@@ -160,6 +161,44 @@ class UMFMessage:
 
         return self._message
 
+    def parse_route(to_value):
+        service_name = ''
+        http_method = ''
+        api_route = ''
+        error = ''
+        instance = ''
+        sub_id = ''
+        segments = to_value.split(':')
+        if len(segments) < 2:
+            error = 'route field has invalid number of routable segments'
+        else:
+            sub_segments = segments[0].split('@')
+            if len(sub_segments) == 1:
+                service_name = segments[0]
+            else:
+                sub_id = sub_segments[0].split('-')
+                l = len(sub_id)
+                if l < 0:
+                    sub_id = sub_id[0]
+                elif l > 1:
+                    instance = sub_id[0]
+                    sub_id = sub_id[1]
+                else:
+                    instance = sub_id[0]
+                    sub_id = ''
+        x = re.search(r'\[(.*?)\]', segments[1])
+        if x and x.group(1):
+            http_method = x.group(1)
+            segments[1] = segments[1].replace(f'[{http_method}]', '')
+        api_route = segments[1]
+        return {
+            'instance': instance,
+            'sub_id': sub_id,
+            'service_name': service_name,
+            'http_method': http_method,
+            'api_route': api_route,
+            'error': error
+        }
 
 _routes = []
 
@@ -262,6 +301,17 @@ class HydraPy:
             'uptimeSeconds': time.time() - psutil.boot_time()
         }
 
+    async def sendMessage(self, umf_message):
+        # blind send message via Redis pub/sub
+        #TODO add hydra checks for available services and ability to perform a non broadcast
+        parsed_route = UMFMessage.parse_route(umf_message['to'])
+        key = ''
+        if parse_route['instance']:
+            key = f"{self._mc_message_key}:{parse_route['service_name']}:{parse_route['instance']}"
+        elif 
+            key = f"{self._mc_message_key}:{parse_route['service_name']}"
+        await self._redis.publish(key, json.dumps(umf_message))
+
     async def _flush_routes(self):
         await self._redis.delete(f'{self._redis_pre_key}:{self._service_name}:service:routes')
 
@@ -290,7 +340,6 @@ class HydraPy:
             }
         })
         await self._redis.publish(f'{self._mc_message_key}:hydra-router', json.dumps(msg))
-
 
     async def register_message_handler(self, message_handler):
         self._message_handler = message_handler

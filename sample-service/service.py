@@ -15,10 +15,15 @@ hydra_route('/', ['GET'])
 async def home():
     return 'HydraPy Sample Service'
 
-hydra_route('/v1/sample/test', ['GET'])
-@app.route('/v1/sample/test', methods=['GET'])
-async def test():
-    return 'HydraPy Sample Service test call'
+hydra_route('/v1/sample/test/:param1/:param2', ['GET'])
+@app.route('/v1/sample/test/<param1>/<param2>', methods=['GET'])
+async def test(param1, param2):
+    return {
+        'result': {
+            'param1': param1,
+            'param2': param2
+        }
+    }
 
 async def startQuart(si):
     print(f"{si['serviceName']}({si['instanceID']})(v{si['serviceVersion']}) running at {si['serviceIP']}:{si['servicePort']}")
