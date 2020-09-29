@@ -1,4 +1,5 @@
-# Syntax: ./build-debug.sh 0.1.1
+# Syntax: ./build-debug.sh
 # Use --no-cache=true  when necessary
 cp ../hydrapy/hydra.py .
-docker build -f Dockerfile.debug -t message-sample-service:$1 .
+VERSION_TAG=$(<VERSION)
+docker build -f Dockerfile.debug -t message-sample-service:$VERSION_TAG .

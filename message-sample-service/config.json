@@ -1,7 +1,6 @@
 {
     "hydra": {
         "serviceName": "message",
-        "serviceVersion": "1.0.0",
         "serviceIP": "",
         "servicePort": 16000,
         "serviceType": "example",

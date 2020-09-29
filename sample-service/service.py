@@ -9,6 +9,7 @@ from hydra import HydraPy
 from hydra import hydra_route
 
 app = Quart(__name__)
+service_version = open('VERSION').read()
 
 hydra_route('/', ['GET'])
 @app.route('/', methods=['GET'])
@@ -39,7 +40,7 @@ async def main():
     async def hydra_message_handler(message):
         print(message)
 
-    hydra = HydraPy('./config.json', hydra_message_handler)
+    hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
     si = await hydra.init()
 
     hydra_route('/v1/sample/health', ['GET'])

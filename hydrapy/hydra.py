@@ -230,12 +230,15 @@ class HydraPy:
 
     _message_handler = None
 
-    def __init__(self, config_path, message_handler):
+    def __init__(self, config_path, version, message_handler):
         if message_handler:
             self._message_handler = message_handler
 
         with open(config_path, 'r', encoding='utf-8-sig') as json_file:
             self._config = json.load(json_file)
+
+        if version:
+            self._config['hydra']['serviceVersion'] = version
 
         entry = self._config['hydra']
         if 'serviceVersion' in entry:

@@ -230,12 +230,15 @@ class HydraPy:
 
     _message_handler = None
 
-    def __init__(self, config_path, message_handler):
+    def __init__(self, config_path, version, message_handler):
         if message_handler:
             self._message_handler = message_handler
 
         with open(config_path, 'r', encoding='utf-8-sig') as json_file:
             self._config = json.load(json_file)
+
+        if version:
+            self._config['hydra']['serviceVersion'] = version
 
         entry = self._config['hydra']
         if 'serviceVersion' in entry:
@@ -307,9 +310,9 @@ class HydraPy:
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = ''
         if parsed_route['instance']:
-            key = f"{self._mc_message_key}:{parse_route['service_name']}:{parse_route['instance']}"
+            key = f"{self._mc_message_key}:{parsed_route['service_name']}:{parsed_route['instance']}"
         else:
-            key = f"{self._mc_message_key}:{parse_route['service_name']}"
+            key = f"{self._mc_message_key}:{parsed_route['service_name']}"
         await self._redis.publish(key, json.dumps(umf_message))
 
     async def _flush_routes(self):

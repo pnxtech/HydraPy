@@ -47,7 +47,7 @@ services:
       replicas: 1
 
   hydrapy-sample-service:
-    image: hydrapy-sample-service:1.0.0
+    image: hydrapy-sample-service:1.0.1
     networks:
       - servicenet
     depends_on:
@@ -59,7 +59,7 @@ services:
       replicas: 1
 
   message-sample-service:
-    image: message-sample-service:1.0.0
+    image: message-sample-service:1.0.1
     networks:
       - servicenet
     depends_on:

@@ -10,6 +10,7 @@ from hydra import hydra_route
 from hydra import UMF_Message
 
 app = Quart(__name__)
+service_version = open('VERSION').read()
 
 async def startQuart(si):
     print(f"{si['serviceName']}({si['instanceID']})(v{si['serviceVersion']}) running at {si['serviceIP']}:{si['servicePort']}")
@@ -25,7 +26,7 @@ async def main():
     async def hydra_message_handler(message):
         print(message)
 
-    hydra = HydraPy('./config.json', hydra_message_handler)
+    hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
     si = await hydra.init()
 
     hydra_route('/v1/message/health', ['GET'])
