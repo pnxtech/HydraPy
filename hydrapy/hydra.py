@@ -16,12 +16,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
+import aioredis
 import os
 import time
 import platform
 import psutil
 import socket
-import asyncio
 import json
 import uuid
 import shortuuid
@@ -190,9 +191,13 @@ class HydraPy:
 
     _message_handler = None
 
-    def __init__(self, redis, config):
-        self._redis = redis
-        self._config = config
+    def __init__(self, config_path, message_handler):
+        if message_handler:
+            self._message_handler = message_handler
+
+        with open(config_path, 'r', encoding='utf-8-sig') as json_file:
+            self._config = json.load(json_file)
+
         entry = self._config['hydra']
         if 'serviceVersion' in entry:
             self._service_version = entry['serviceVersion']
@@ -349,6 +354,17 @@ class HydraPy:
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
+
+        redis_entry = self._config['hydra']['redis']
+        redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
+        self._redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
+
         await self._register_service()
         p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
         await p.start()
+
+        # TODO: determine best way to close
+        # self._redis.close()
+        # await self._redis.wait_closed()
+
+        return self.get_service_info()
