@@ -307,9 +307,9 @@ class HydraPy:
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = ''
         if parsed_route['instance']:
-            key = f"{self._mc_message_key}:{parsed_route['service_name']}:{parsed_route['instance']}"
+            key = f"{self._mc_message_key}:{parse_route['service_name']}:{parse_route['instance']}"
         else:
-            key = f"{self._mc_message_key}:{parsed_route['service_name']}"
+            key = f"{self._mc_message_key}:{parse_route['service_name']}"
         await self._redis.publish(key, json.dumps(umf_message))
 
     async def _flush_routes(self):

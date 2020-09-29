@@ -1,0 +1,15 @@
+{
+    "hydra": {
+        "serviceName": "message",
+        "serviceVersion": "1.0.0",
+        "serviceIP": "",
+        "servicePort": 16000,
+        "serviceType": "example",
+        "serviceDescription": "A HydraPy message sample service",
+        "redis": {
+            "host": "redis",
+            "port": 6379,
+            "database": 15
+        }
+    }
+}

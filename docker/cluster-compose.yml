@@ -13,6 +13,8 @@ configs:
     file: ./hydra-router-config.json
   hydrapy_sample_service_config:
     file: ../sample-service/config.json
+  message_sample_service_config:
+    file: ../message-sample-service/config.json
 
 services:
   redis:
@@ -48,15 +50,22 @@ services:
     image: hydrapy-sample-service:1.0.0
     networks:
       - servicenet
-    ports:
-      - target: 15000
-        published: 15000
-        protocol: tcp
-        mode: ingress
     depends_on:
       - redis
     configs:
       - source: hydrapy_sample_service_config
+        target: /usr/src/app/config.json
+    deploy:
+      replicas: 1
+
+  message-sample-service:
+    image: message-sample-service:1.0.0
+    networks:
+      - servicenet
+    depends_on:
+      - redis
+    configs:
+      - source: message_sample_service_config
         target: /usr/src/app/config.json
     deploy:
       replicas: 1

@@ -1,5 +1,5 @@
 # hydrapy-sample-service
-A sample HydraPy service
+A sample message service
 
 
 
