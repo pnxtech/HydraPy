@@ -281,6 +281,17 @@ class HydraPy:
             tr.sadd(key, route)
         await tr.execute()
 
+        msg = (UMFMessage()).createMessage({
+            'to': 'hydra-router:/refresh',
+            'from': f'{self._service_name}:/',
+            'body': {
+                'action': 'refresh',
+                'serviceName': self._service_name
+            }
+        })
+        await self._redis.publish(f'{self._mc_message_key}:hydra-router', json.dumps(msg))
+
+
     async def register_message_handler(self, message_handler):
         self._message_handler = message_handler
 
