@@ -301,7 +301,7 @@ class HydraPy:
             'uptimeSeconds': time.time() - psutil.boot_time()
         }
 
-    async def sendMessage(self, umf_message):
+    async def send_message(self, umf_message):
         # blind send message via Redis pub/sub
         #TODO add hydra checks for available services and ability to perform a non broadcast
         parsed_route = UMFMessage.parse_route(umf_message['to'])
