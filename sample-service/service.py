@@ -6,17 +6,14 @@ from hypercorn.config import Config
 from hypercorn.asyncio import serve
 
 from hydra import HydraPy
-from hydra import hydra_route
 
 app = Quart(__name__)
 service_version = open('VERSION').read()
 
-hydra_route('/', ['GET'])
 @app.route('/', methods=['GET'])
 async def home():
     return 'HydraPy Sample Service'
 
-hydra_route('/v1/sample/test/:param1/:param2', ['GET'])
 @app.route('/v1/sample/test/<param1>/<param2>', methods=['GET'])
 async def test(param1, param2):
     return {
@@ -43,14 +40,13 @@ async def main():
     hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
     si = await hydra.init()
 
-    hydra_route('/v1/sample/health', ['GET'])
     @app.route('/v1/sample/health', methods=['GET'])
     async def health():
         return {
             'result': hydra.get_health()
         }
 
-    await hydra.register_routes()
+    await hydra.register_routes(app)
     await startQuart(si)
 
 

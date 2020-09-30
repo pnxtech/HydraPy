@@ -6,7 +6,6 @@ from hypercorn.config import Config
 from hypercorn.asyncio import serve
 
 from hydra import HydraPy
-from hydra import hydra_route
 from hydra import UMF_Message
 
 app = Quart(__name__)
@@ -29,14 +28,12 @@ async def main():
     hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
     si = await hydra.init()
 
-    hydra_route('/v1/message/health', ['GET'])
     @app.route('/v1/message/health', methods=['GET'])
     async def health():
         return {
             'result': hydra.get_health()
         }
 
-    hydra_route('/v1/message/send', ['GET'])
     @app.route('/v1/message/send', methods=['GET'])
     async def send():
         msg = (UMF_Message()).create_message({
@@ -51,7 +48,7 @@ async def main():
         return {
             'result': {}
         }
-    await hydra.register_routes()
+    await hydra.register_routes(app)
     await startQuart(si)
 
 
