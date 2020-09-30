@@ -1,6 +1,7 @@
-![](./assets/hydrapy-logo.png)
 # HydraPy
 Hydra for Python
+
+![](./assets/hydrapy-logo.png)
 
 ```diff
 - NOTE THIS PROJECT IS IN VERY EARLY DEVELOPMENT
@@ -33,8 +34,7 @@ The following describes the approach:
 #### Import
 
 ```python
-from hydra import HydraPy
-from hydra import hydra_route
+from hydrapy import HydraPy, hydra_route, UMF_Message
 ```
 
 #### Route registration
@@ -53,8 +53,8 @@ Note we still call the hydra_route function so that HydraPy will know about this
 Routes that do depend on HydraPy must be declared after HydraPy has been initialized.
 
 ```python
-hydra = HydraPy(redis, hydra_config)
-await hydra.init()
+hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
+si = await hydra.init()
 
 hydra_route('/v1/sample/health', ['GET'])
 @app.route('/v1/sample/health', methods=['GET'])
@@ -77,13 +77,13 @@ The service can be built as a debug and non-debug container.
 
 ```shell
 $ cd sample-service
-$ ./build-debug.sh 1.0.0
+$ ./build-debug.sh
 ```
 
 #### Non-debug
 ```shell
 $ cd sample-service
-$ ./build.sh 1.0.0
+$ ./build.sh
 ```
 
 ### Start the support cluster

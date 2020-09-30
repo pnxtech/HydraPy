@@ -5,9 +5,7 @@ from quart.logging import create_serving_logger
 from hypercorn.config import Config
 from hypercorn.asyncio import serve
 
-from hydra import HydraPy
-from hydra import hydra_route
-from hydra import UMF_Message
+from hydrapy import HydraPy, hydra_route, UMF_Message
 
 app = Quart(__name__)
 service_version = open('VERSION').read()

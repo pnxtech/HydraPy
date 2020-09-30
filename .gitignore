@@ -1,7 +1,7 @@
 .DS_Store
 *.log
 *.egg-info/
+build/
 scratch.*
 .vscode/
-sample-service/hydra.py
 dist/

@@ -17,7 +17,9 @@
 # SOFTWARE.
 
 from .hydra import HydraPy
-
+from .hydra import hydra_route
+from .hydra import UMF_Message
 
 def version():
-    return '0.1.0'
+    version = open('VERSION').read()
+    return version
