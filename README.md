@@ -8,11 +8,6 @@ Hydra for Python
 * HydraPy requires Python 3.7+ and aioredis==1.3.1 or greater
 ```
 
-```diff
-- If using this version with HydraRouter it's important to refresh hydra router after your test container is loaded.
-- $ curl localhost:5353/v1/router/refresh
-```
-
 Hydra is an approach to building light-weight microservices by leveraging the awesome power of the Redis database platform.
 
 HydraPy is a nextgen port of the NodeJS implementation of Hydra with a goal of offering the same level of ease of use to the Python community.  We hope this will empower data scientists to build containerized microservices for their AI/ML applications.
