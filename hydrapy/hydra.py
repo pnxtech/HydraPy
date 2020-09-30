@@ -200,12 +200,6 @@ class UMF_Message:
             'error': error
         }
 
-_routes = []
-
-
-def hydra_route(*args, **kwargs):
-    _routes.append(args)
-
 
 class HydraPy:
     _ONE_SECOND = 1
@@ -318,7 +312,7 @@ class HydraPy:
     async def _flush_routes(self):
         await self._redis.delete(f'{self._redis_pre_key}:{self._service_name}:service:routes')
 
-    async def register_routes(self):
+    async def register_routes(self, app):
         await self._flush_routes()
         key = f'{self._redis_pre_key}:{self._service_name}:service:routes'
         self._hydra_routes = [
@@ -326,9 +320,9 @@ class HydraPy:
             f'[get]/{self._service_name}/',
             f'[get]/{self._service_name}/:rest'
         ]
-        for route in _routes:
-            for method in route[1]:
-                self._hydra_routes.append(f'[{method.lower()}]{route[0]}')
+        for route in app.url_map.iter_rules():
+            for method in route.methods - {'HEAD', 'OPTIONS'}:
+                self._hydra_routes.append(f'[{method.lower()}]{route.rule}')
         tr = self._redis.multi_exec()
         for route in self._hydra_routes:
             tr.sadd(key, route)
