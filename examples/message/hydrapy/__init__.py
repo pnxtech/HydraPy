@@ -21,4 +21,5 @@ from .hydra import hydra_route
 from .hydra import UMF_Message
 
 def version():
-    return open('VERSION').read().rstrip()
+    version = open('VERSION').read()
+    return version

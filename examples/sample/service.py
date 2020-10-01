@@ -8,7 +8,7 @@ from hypercorn.asyncio import serve
 from hydrapy import HydraPy, hydra_route, UMF_Message
 
 app = Quart(__name__)
-service_version = open('VERSION').read()
+service_version = open('VERSION').read().rstrip()
 
 hydra_route('/', ['GET'])
 @app.route('/', methods=['GET'])
@@ -29,6 +29,7 @@ async def startQuart(si):
     print(f"{si['serviceName']}({si['instanceID']})(v{si['serviceVersion']}) running at {si['serviceIP']}:{si['servicePort']}")
     config = Config()
     config.bind = [f"{si['serviceIP']}:{si['servicePort']}"]
+    # config.bind = [f"0.0.0.0:{si['servicePort']}"]
     config.access_log_format = '%(h)s %(r)s %(s)s %(b)s %(D)s'
     config.accesslog = create_serving_logger()
     config.errorlog = config.accesslog
@@ -47,6 +48,14 @@ async def main():
     async def health():
         return {
             'result': hydra.get_health()
+        }
+
+    hydra_route('/v1/sample/presence', ['GET'])
+    @app.route('/v1/sample/presence', methods=['GET'])
+    async def presence():
+        instances = await hydra.get_presence(f"{si['serviceName']}")
+        return {
+            'result': instances
         }
 
     await hydra.register_routes()

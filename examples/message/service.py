@@ -8,7 +8,7 @@ from hypercorn.asyncio import serve
 from hydrapy import HydraPy, hydra_route, UMF_Message
 
 app = Quart(__name__)
-service_version = open('VERSION').read()
+service_version = open('VERSION').read().rstrip()
 
 async def startQuart(si):
     print(f"{si['serviceName']}({si['instanceID']})(v{si['serviceVersion']}) running at {si['serviceIP']}:{si['servicePort']}")

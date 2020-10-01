@@ -7,7 +7,7 @@ with open("requirements.txt") as f:
     install_requires = f.read().splitlines()
 
 with open("./hydrapy/VERSION") as f:
-    version = f.read()
+    version = f.read().rstrip()
 
 setuptools.setup(
     name="hydra-py",

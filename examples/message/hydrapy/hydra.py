@@ -16,18 +16,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import aioredis
 import asyncio
-import json
+import aioredis
 import os
 import time
 import platform
 import psutil
-import random
-import re
-import shortuuid
 import socket
+import re
+import json
 import uuid
+import shortuuid
 
 from datetime import datetime
 from pprint import pp
@@ -248,15 +247,12 @@ class HydraPy:
             self._service_version = '0.0.0'
         self._service_name = entry['serviceName']
 
-        if 'serviceDNS' in entry and entry['serviceDNS'] != '':
-            entry['serviceIP'] = entry['serviceDNS']
-            self._service_ip = entry['serviceDNS']
+        # TODO: handle DNS names
+        if entry['serviceIP'] != '':
+            self._service_ip = entry['serviceIP']
         else:
-            if entry['serviceIP'] != '':
-                self._service_ip = entry['serviceIP']
-            else:
-                ip = socket.gethostbyname(socket.gethostname())
-                self._service_ip = ip
+            ip = socket.gethostbyname(socket.gethostname())
+            self._service_ip = ip
 
         self._service_port = entry['servicePort']
         self._service_description = entry['serviceDescription']
@@ -318,31 +314,6 @@ class HydraPy:
         else:
             key = f"{self._mc_message_key}:{parsed_route['service_name']}"
         await self._redis.publish(key, json.dumps(umf_message))
-
-    async def get_presence(self, service_name):
-        instance_list = []
-        ids = []
-        cur = b'0'
-        while cur:
-            cur, keys = await self._redis.scan(cur, match=f'*:{service_name}:*:presence')
-            ids.append(keys)
-        trans=[]
-        tr = self._redis.multi_exec()
-        pp(ids)
-        for entry in ids[0]:
-            if len(entry) != 0:
-                pp(entry)
-                instance_id = entry.split(':')[3]
-                trans.append(tr.hget(f'{self._redis_pre_key}:nodes', instance_id))
-        await tr.execute()
-        results = []
-        raw_results = await asyncio.gather(*trans)
-        for item in raw_results:
-            obj = json.loads(item)
-            timestamp = obj['updatedOn'].replace('z', '+0000')
-            obj['updatedOnTS'] = int(time.mktime(time.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z')))
-            results.append(obj)
-        return random.sample(results, len(results))
 
     async def _flush_routes(self):
         await self._redis.delete(f'{self._redis_pre_key}:{self._service_name}:service:routes')

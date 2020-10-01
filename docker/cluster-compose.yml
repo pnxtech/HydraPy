@@ -11,10 +11,10 @@ networks:
 configs:
   hydra_router_config:
     file: ./hydra-router-config.json
-  hydrapy_sample_service_config:
-    file: ../examples/sample-service/config.json
-  message_sample_service_config:
-    file: ../examples/message-sample-service/config.json
+  sample_config:
+    file: ../examples/sample/config.json
+  message_config:
+    file: ../examples/message/config.json
 
 services:
   redis:
@@ -46,26 +46,26 @@ services:
     deploy:
       replicas: 1
 
-  hydrapy-sample-service:
-    image: hydrapy-sample-service:1.0.1
+  sample:
+    image: sample:1.0.1
     networks:
       - servicenet
     depends_on:
       - redis
     configs:
-      - source: hydrapy_sample_service_config
+      - source: sample_config
         target: /usr/src/app/config.json
     deploy:
       replicas: 1
 
-  message-sample-service:
-    image: message-sample-service:1.0.1
+  message:
+    image: message:1.0.1
     networks:
       - servicenet
     depends_on:
       - redis
     configs:
-      - source: message_sample_service_config
+      - source: message_config
         target: /usr/src/app/config.json
     deploy:
       replicas: 1

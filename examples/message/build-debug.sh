@@ -2,4 +2,4 @@
 # Use --no-cache=true  when necessary
 cp -R ../../hydrapy .
 VERSION_TAG=$(<VERSION)
-docker build -f Dockerfile.debug -t message-sample-service:$VERSION_TAG .
+docker build -f Dockerfile.debug -t message:$VERSION_TAG .
