@@ -12,9 +12,9 @@ configs:
   hydra_router_config:
     file: ./hydra-router-config.json
   hydrapy_sample_service_config:
-    file: ../sample-service/config.json
+    file: ../examples/sample-service/config.json
   message_sample_service_config:
-    file: ../message-sample-service/config.json
+    file: ../examples/message-sample-service/config.json
 
 services:
   redis:

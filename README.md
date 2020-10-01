@@ -5,6 +5,7 @@ Hydra for Python
 
 ```diff
 - NOTE THIS PROJECT IS IN VERY EARLY DEVELOPMENT
+- HydraPy is changing quickly and not recommended for use at this time
 * HydraPy requires Python 3.7+ and aioredis==1.3.1 or greater
 ```
 
@@ -25,6 +26,10 @@ The following describes the approach:
 ---
 
 ## Usage
+
+#### Installation
+
+https://pypi.org/project/hydra-py/
 
 #### Import
 
@@ -63,6 +68,12 @@ await hydra.register_routes()
 
 
 ---
+## Example services
+There are two example services available:
+
+#### sample-service
+#### message-sample-service
+
 ## Development
 
 ### Build the sample-service

@@ -1,7 +1,8 @@
 .DS_Store
-*.log
+.vscode/
 *.egg-info/
 build/
-scratch.*
-.vscode/
 dist/
+examples/sample-service/hydrapy/
+examples/message-sample-service/hydrapy/
+
