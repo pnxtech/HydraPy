@@ -309,14 +309,20 @@ class HydraPy:
         }
 
     async def send_message(self, umf_message):
-        # blind send message via Redis pub/sub
-        #TODO add hydra checks for available services and ability to perform a non broadcast
         parsed_route = UMF_Message.parse_route(umf_message['to'])
-        key = ''
-        if parsed_route['instance']:
-            key = f"{self._mc_message_key}:{parsed_route['service_name']}:{parsed_route['instance']}"
-        else:
-            key = f"{self._mc_message_key}:{parsed_route['service_name']}"
+        instances_list = await self.get_presence(parsed_route['service_name'])
+        instance = None
+        if len(instances_list):
+            if parsed_route['instance'] != '':
+                instance = parsed_route['instance']
+                #TODO: loop through instances_list to confirm instance ID is present
+            else:
+                instance = instances_list[0]['instanceID']
+            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(umf_message))
+
+    async def send_broadcast_message(self, umf_message):
+        parsed_route = UMF_Message.parse_route(umf_message['to'])
+        key = f"{self._mc_message_key}:{parsed_route['service_name']}"
         await self._redis.publish(key, json.dumps(umf_message))
 
     async def get_presence(self, service_name):
@@ -329,11 +335,12 @@ class HydraPy:
         trans=[]
         tr = self._redis.multi_exec()
         pp(ids)
-        for entry in ids[0]:
-            if len(entry) != 0:
-                pp(entry)
-                instance_id = entry.split(':')[3]
-                trans.append(tr.hget(f'{self._redis_pre_key}:nodes', instance_id))
+        for entries in ids:
+            for entry in entries:
+                if len(entry) != 0:
+                    pp(entry)
+                    instance_id = entry.split(':')[3]
+                    trans.append(tr.hget(f'{self._redis_pre_key}:nodes', instance_id))
         await tr.execute()
         results = []
         raw_results = await asyncio.gather(*trans)

@@ -12,7 +12,7 @@ with open("./hydrapy/VERSION") as f:
 setuptools.setup(
     name="hydra-py",
     version=version,
-    description="Hydra for Python",
+    description="Hydra for Python. A light-weight library for building distributed applications such as microservices.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pnxtech/HydraPy",

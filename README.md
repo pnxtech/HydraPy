@@ -1,4 +1,4 @@
-![](assets/hydrapy-logo.png)
+![](./assets/hydrapy-logo.png)
 
 # Hydra-Py
 Hydra for Python. A light-weight library for building distributed applications such as microservices.
@@ -16,5 +16,5 @@ Hydra is an approach to building light-weight microservices by leveraging the aw
 > Hydra-Py is a nextgen port of the NodeJS implementation of Hydra with a goal of offering the same level of ease of use to the Python community.  We hope this will empower data scientists to build containerized microservices for their AI/ML applications.
 
 ## Documentation
-Visit the [project documentation](./documentation/README.md) for a quick start guide and additional documentation.
+Visit the [project documentation](https://github.com/pnxtech/HydraPy/tree/master/documentation) for a quick start guide and additional documentation.
 

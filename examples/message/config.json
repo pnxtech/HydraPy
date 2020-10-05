@@ -2,6 +2,7 @@
     "hydra": {
         "serviceName": "message",
         "serviceIP": "",
+        "xxxserviceDNS": "message",
         "servicePort": 16000,
         "serviceType": "example",
         "serviceDescription": "A HydraPy message sample service",

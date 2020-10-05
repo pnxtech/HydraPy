@@ -3,6 +3,5 @@
 *.egg-info/
 build/
 dist/
-examples/sample-service/hydrapy/
-examples/message-sample-service/hydrapy/
-
+examples/sample/hydrapy/
+examples/message/hydrapy/

@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime
+import json
 
 from quart import Quart
 from quart.logging import create_serving_logger
@@ -38,7 +40,7 @@ async def startQuart(si):
 
 async def main():
     async def hydra_message_handler(message):
-        print(message)
+        print(f'{json.dumps(message)}', flush=True)
 
     hydra = HydraPy(config_path='./config.json', version=service_version, message_handler=hydra_message_handler)
     si = await hydra.init()
@@ -50,12 +52,32 @@ async def main():
             'result': hydra.get_health()
         }
 
-    hydra_route('/v1/sample/presence', ['GET'])
-    @app.route('/v1/sample/presence', methods=['GET'])
-    async def presence():
-        instances = await hydra.get_presence(f"{si['serviceName']}")
+    hydra_route('/v1/sample/send', ['GET'])
+    @app.route('/v1/sample/send', methods=['GET'])
+    async def send_message():
+        msg = (UMF_Message()).create_message({
+            'to': 'message:/',
+            'from': f"{si['serviceName']}:/",
+            'body': {
+            }
+        })
+        await hydra.send_message(msg)
         return {
-            'result': instances
+            'result': {}
+        }
+
+    hydra_route('/v1/sample/send-bc', ['GET'])
+    @app.route('/v1/sample/send-bc', methods=['GET'])
+    async def send_broadcast_message():
+        msg = (UMF_Message()).create_message({
+            'to': 'message:/',
+            'from': f"{si['serviceName']}:/",
+            'body': {
+            }
+        })
+        await hydra.send_broadcast_message(msg)
+        return {
+            'result': {}
         }
 
     await hydra.register_routes()
