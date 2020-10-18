@@ -231,6 +231,13 @@ class HydraPy:
 
     _message_handler = None
 
+    INFO = 'info'
+    DEBUG = 'debug'
+    WARN = 'warn'
+    ERROR = 'error'
+    FATAL = 'fatal'
+    TRACE = 'trace'
+
     def __init__(self, config_path, version, message_handler):
         if message_handler:
             self._message_handler = message_handler
@@ -433,6 +440,24 @@ class HydraPy:
                      self._instance_id, json.dumps(entry))
         await tr.execute()
         await asyncio.gather(f1, f2)
+
+    async def log(self, severity, entry, text=None):
+        new_entry = {
+            'serviceName': self._service_name,
+            'version': self._service_version,
+            'instanceID': self._instance_id,
+            'severity': severity,
+            'bdy': {}
+        }
+        if text:
+            new_entry['message'] = text
+        if entry:
+            new_entry['bdy'] = entry
+        await self.send_broadcast_message((UMF_Message()).create_message({
+            'to': 'hydra-logging-svcs:/',
+            'from': f'{self._service_name}:/',
+            'body': new_entry
+        }))
 
     async def _health_check_event(self):
         tr = self._redis.multi_exec()
