@@ -187,6 +187,7 @@ class UMF_Message:
                 else:
                     instance = sub_id[0]
                     sub_id = ''
+                service_name = sub_segments[1]
         x = re.search(r'\[(.*?)\]', segments[1])
         if x and x.group(1):
             http_method = x.group(1)
