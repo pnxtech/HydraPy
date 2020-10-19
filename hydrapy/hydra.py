@@ -492,3 +492,6 @@ class HydraPy:
         # await self._redis.wait_closed()
 
         return self.get_service_info()
+
+    async def run(self):
+        await self._redis.wait_closed()
