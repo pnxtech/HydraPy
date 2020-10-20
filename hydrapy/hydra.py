@@ -331,7 +331,6 @@ class HydraPy:
     async def send_message_reply(self, src_message, reply_message):
         msg = None
         if 'via' in src_message:
-            parsed_route = UMF_Message.parse_route(src_message['via'])
             msg = (UMF_Message()).create_message({
                 'to': src_message['via'],
                 'from': src_message['to'],
@@ -340,14 +339,13 @@ class HydraPy:
                 'body': reply_message['body']
             })
         else:
-            parsed_route = UMF_Message.parse_route(src_message['from'])
             msg = (UMF_Message()).create_message({
                 'to': src_message['from'],
                 'from': src_message['to'],
                 'rmid': src_message['mid'],
                 'body': reply_message['body']
             })
-        await self.hydra.send_message(msg)
+        await self.send_message(msg)
 
     async def send_broadcast_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
