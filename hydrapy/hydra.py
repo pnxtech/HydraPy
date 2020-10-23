@@ -41,6 +41,12 @@ class UMF_Message:
     def __init__(self):
         self._message = {}
 
+    def validate(message):
+        if ('from' in message) and (message['from'] != '') and ('to' in message) and (message['to'] != '') and ('body' in message):
+            return True
+        else:
+            return False
+
     def get_time_stamp():
         '''retrieve an ISO 8601 timestamp'''
         return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -202,6 +208,7 @@ class UMF_Message:
             'error': error
         }
 
+
 _routes = []
 
 
@@ -231,6 +238,7 @@ class HydraPy:
     _hydra_routes = []
 
     _message_handler = None
+    _queue_handler = None
 
     INFO = 'info'
     DEBUG = 'debug'
@@ -239,9 +247,12 @@ class HydraPy:
     FATAL = 'fatal'
     TRACE = 'trace'
 
-    def __init__(self, config_path, version, message_handler):
+    def __init__(self, config_path, version, message_handler, queue_handler):
         if message_handler:
             self._message_handler = message_handler
+
+        if queue_handler:
+            self._queue_handler = queue_handler
 
         with open(config_path, 'r', encoding='utf-8-sig') as json_file:
             self._config = json.load(json_file)
@@ -478,6 +489,42 @@ class HydraPy:
             'body': new_entry
         }))
 
+    async def register_queue_handler(self, queue_handler):
+        self._queue_handler = queue_handler
+
+    async def queue_message(self, message):
+        ''' self._service_name isn't used here because any service can queue '''
+        ''' a message for another service '''
+        umf_message = UMF_Message()
+        msg = umf_message.create_message(message)
+        if UMF_Message.validate(msg):
+            parsed_route = UMF_Message.parse_route(msg['to'])
+            if not parsed_route['error']:
+                service_name = parsed_route['service_name']
+                await self._redis.lpush(f'{self._redis_pre_key}:{service_name}:mqrecieved', json.dumps(umf_message.to_short()))
+
+    async def get_queue_message(self, service_name):
+        ''' use self._service_name here to enforce that only a service message '''
+        ''' owner can dequeue a message '''
+        res = await self._redis.rpoplpush(f'{self._redis_pre_key}:{self._service_name}:mqrecieved', f'{self._redis_pre_key}:{self._service_name}:mqinprogress')
+        if res:
+            return json.loads(res)
+        return None
+
+    async def mark_queue_message(self, message, completed, reason):
+        ''' use self._service_name here to enforce that only a service message '''
+        ''' owner can mark a message as processed '''
+        smsg = json.dumps(message)
+        await self._redis.lrem(f'{self._redis_pre_key}:{self._service_name}:mqinprogress', -1, smsg)
+        if 'bdy' in message:
+            message['bdy']['reason'] = reason or 'reason not provided'
+        elif 'body' in message:
+            message['bdy']['reason'] = reason or 'reason not provided'
+        if not completed:
+            smsg = json.dumps(message)
+            self._redis.rpush(f'{self._redis_pre_key}:{self._service_name}:mqincomplete', smsg)
+        return message
+
     async def _health_check_event(self):
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health',
@@ -494,6 +541,8 @@ class HydraPy:
         if self._hydra_event_count % self._HEALTH_UPDATE_INTERVAL == 0:
             self._hydra_event_count = 0
             await self._health_check_event()
+        if self._queue_handler:
+            await self._queue_handler()
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
