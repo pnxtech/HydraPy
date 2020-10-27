@@ -346,16 +346,15 @@ class HydraPy:
                 'to': src_message['via'],
                 'from': src_message['to'],
                 'via': src_message['via'],
-                'rmid': src_message['mid'],
-                'body': reply_message['body']
+                'rmid': src_message['mid']
             })
         else:
             msg = (UMF_Message()).create_message({
                 'to': src_message['from'],
                 'from': src_message['to'],
-                'rmid': src_message['mid'],
-                'body': reply_message['body']
+                'rmid': src_message['mid']
             })
+        msg.update(reply_message)
         await self.send_message(msg)
 
     async def send_broadcast_message(self, umf_message):
