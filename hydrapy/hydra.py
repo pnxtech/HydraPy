@@ -349,14 +349,14 @@ class HydraPy:
         if 'via' in src_message:
             msg = (UMF_Message()).create_message({
                 'to': src_message['via'],
-                'from': src_message['to'],
+                'frm': src_message['to'],
                 'via': src_message['via'],
                 'rmid': src_message['mid']
             })
         else:
             msg = (UMF_Message()).create_message({
-                'to': src_message['from'],
-                'from': src_message['to'],
+                'to': src_message['frm'],
+                'frm': src_message['to'],
                 'rmid': src_message['mid']
             })
         msg.update(reply_message)
