@@ -42,7 +42,7 @@ class UMF_Message:
         self._message = {}
 
     def validate(message):
-        if ('from' in message) and (message['from'] != '') and ('to' in message) and (message['to'] != '') and ('body' in message):
+        if ('frm' in message) and (message['frm'] != '') and ('to' in message) and (message['to'] != '') and ('bdy' in message):
             return True
         else:
             return False
@@ -97,80 +97,42 @@ class UMF_Message:
         return message
 
     def create_message(self, message):
-        '''Create a UMF message'''
+        message = self.to_short(message)
         if 'to' in message:
             self._message['to'] = message['to']
-
-        if 'from' in message:
-            self._message['from'] = message['from']
         if 'frm' in message:
-            self._message['from'] = message['frm']
-
-        if 'headers' in message:
-            self._message['headers'] = message['headers']
+            self._message['frm'] = message['frm']
         if 'hdr' in message:
-            self._message['headers'] = message['hdr']
-
+            self._message['hdr'] = message['hdr']
         if 'mid' in message:
             self._message['mid'] = message['mid']
         else:
             self._message['mid'] = UMF_Message.create_message_id()
-
         if 'rmid' in message:
             self._message['rmid'] = message['rmid']
-
-        if 'signature' in message:
-            self._message['signature'] = message['signature']
         if 'sig' in message:
-            self._message['signature'] = message['sig']
-
-        if 'timout' in message:
-            self._message['timeout'] = message['timeout']
+            self._message['sig'] = message['sig']
         if 'tmo' in message:
-            self._message['timeout'] = message['tmo']
-
-        if 'timestamp' in message:
-            self._message['timestamp'] = message['timestamp']
-        elif 'ts' in message:
-            self._message['timestamp'] = message['ts']
+            self._message['tmo'] = message['tmo']
+        if 'ts' in message:
+            self._message['ts'] = message['ts']
         else:
-            self._message['timestamp'] = UMF_Message.get_time_stamp()
-
-        if 'type' in message:
-            self._message['type'] = message['type']
+            self._message['ts'] = UMF_Message.get_time_stamp()
         if 'typ' in message:
-            self._message['type'] = message['typ']
-
-        if 'version' in message:
-            self._message['version'] = message['version']
-        elif 'ver' in message:
-            self._message['version'] = message['ver']
+            self._message['typ'] = message['typ']
+        if 'ver' in message:
+            self._message['ver'] = message['ver']
         else:
-            self._message['version'] = self._UMF_VERSION
-
+            self._message['ver'] = self._UMF_VERSION
         if 'via' in message:
             self._message['via'] = message['via']
-
-        if 'forward' in message:
-            self._message['forward'] = message['forward']
         if 'fwd' in message:
-            self._message['forward'] = message['fwd']
-
-        if 'body' in message:
-            self._message['body'] = message['body']
+            self._message['fwd'] = message['fwd']
         if 'bdy' in message:
-            self._message['body'] = message['bdy']
-
-        if 'authorization' in message:
-            self._message['authorization'] = message['authorization']
+            self._message['bdy'] = message['bdy']
         if 'aut' in message:
-            self._message['authorization'] = message['aut']
-
+            self._message['aut'] = message['aut']
         return self._message
-
-    def create_short_message(self, message):
-        self.create_message(message)
-        return self.to_short()
 
     def parse_route(to_value):
         service_name = ''
@@ -341,7 +303,6 @@ class HydraPy:
                 #TODO: loop through instances_list to confirm instance ID is present
             else:
                 instance = instances_list[0]['instanceID']
-            msg = (UMF_Message()).create_short_message(umf_message)
             await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(msg))
 
     async def send_message_reply(self, src_message, reply_message):
@@ -355,7 +316,7 @@ class HydraPy:
             })
         else:
             msg = (UMF_Message()).create_message({
-                'to': src_message['from'],
+                'to': src_message['frm'],
                 'from': src_message['to'],
                 'rmid': src_message['mid']
             })
@@ -365,8 +326,7 @@ class HydraPy:
     async def send_broadcast_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = f"{self._mc_message_key}:{parsed_route['service_name']}"
-        msg = (UMF_Message()).create_short_message(umf_message)
-        await self._redis.publish(key, json.dumps(msg))
+        await self._redis.publish(key, json.dumps(umf_message))
 
     async def get_presence(self, service_name):
         instance_list = []
@@ -412,10 +372,10 @@ class HydraPy:
             tr.sadd(key, route)
         await tr.execute()
 
-        msg = (UMF_Message()).create_short_message({
+        msg = (UMF_Message()).create_message({
             'to': 'hydra-router:/refresh',
-            'from': f'{self._service_name}:/',
-            'body': {
+            'frm': f'{self._service_name}:/',
+            'bdy': {
                 'action': 'refresh',
                 'serviceName': self._service_name
             }
@@ -441,7 +401,6 @@ class HydraPy:
             while (await channel.wait_message()):
                 if self._message_handler:
                     msg = await channel.get_json()
-                    msg = (UMF_Message()).create_short_message(msg)
                     asyncio.ensure_future(self._message_handler(msg))
 
         ch1 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}')
@@ -490,8 +449,8 @@ class HydraPy:
             new_entry['bdy'] = entry
         await self.send_broadcast_message((UMF_Message()).create_message({
             'to': 'hydra-logging-svcs:/',
-            'from': f'{self._service_name}:/',
-            'body': new_entry
+            'frm': f'{self._service_name}:/',
+            'bdy': new_entry
         }))
 
     async def register_queue_handler(self, queue_handler):
@@ -500,7 +459,7 @@ class HydraPy:
     async def queue_message(self, message):
         ''' self._service_name isn't used here because any service can queue '''
         ''' a message for another service '''
-        msg = (UMF_Message()).create_short_message(message)
+        msg = (UMF_Message()).create_message(message)
         if UMF_Message.validate(msg):
             parsed_route = UMF_Message.parse_route(msg['to'])
             if not parsed_route['error']:
@@ -521,8 +480,6 @@ class HydraPy:
         smsg = json.dumps(message)
         await self._redis.lrem(f'{self._redis_pre_key}:{self._service_name}:mqinprogress', -1, smsg)
         if 'bdy' in message:
-            message['bdy']['reason'] = reason or 'reason not provided'
-        elif 'body' in message:
             message['bdy']['reason'] = reason or 'reason not provided'
         if not completed:
             smsg = json.dumps(message)
