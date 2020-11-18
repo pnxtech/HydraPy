@@ -66,6 +66,7 @@ class UMF_Message:
     def to_short(self, message):
         '''convert a long message to a short one'''
         msg = {}
+        msg.update(message)
         if 'to' in message:
             msg['to'] = message['to']
         if 'from' in message:
