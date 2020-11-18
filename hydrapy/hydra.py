@@ -63,38 +63,38 @@ class UMF_Message:
         '''A JSON stringifiable version of message'''
         return self._message
 
-    def to_short(self):
+    def to_short(self, message):
         '''convert a long message to a short one'''
-        message = {}
-        if 'to' in self._message:
-            message['to'] = self._message['to']
-        if 'from' in self._message:
-            message['frm'] = self._message['from']
-        if 'headers' in self._message:
-            message['hdr'] = self._message['headers']
-        if 'mid' in self._message:
-            message['mid'] = self._message['mid']
-        if 'rmid' in self._message:
-            message['rmid'] = self._message['rmid']
-        if 'signature' in self._message:
-            message['sig'] = self._message['signature']
-        if 'timeout' in self._message:
-            message['tmo'] = self._message['timeout']
-        if 'timestamp' in self._message:
-            message['ts'] = self._message['timestamp']
-        if 'type' in self._message:
-            message['typ'] = self._message['type']
-        if 'version' in self._message:
-            message['ver'] = self._message['version']
-        if 'via' in self._message:
-            message['via'] = self._message['via']
-        if 'forward' in self._message:
-            message['fwd'] = self._message['forward']
-        if 'body' in self._message:
-            message['bdy'] = self._message['body']
-        if 'authorization' in self._message:
-            message['aut'] = self._message['authorization']
-        return message
+        msg = {}
+        if 'to' in message:
+            msg['to'] = message['to']
+        if 'from' in message:
+            msg['frm'] = message['from']
+        if 'headers' in message:
+            msg['hdr'] = message['headers']
+        if 'mid' in message:
+            msg['mid'] = message['mid']
+        if 'rmid' in message:
+            msg['rmid'] = message['rmid']
+        if 'signature' in message:
+            msg['sig'] = message['signature']
+        if 'timeout' in message:
+            msg['tmo'] = message['timeout']
+        if 'timestamp' in message:
+            msg['ts'] = message['timestamp']
+        if 'type' in message:
+            msg['typ'] = message['type']
+        if 'version' in message:
+            msg['ver'] = message['version']
+        if 'via' in message:
+            msg['via'] = message['via']
+        if 'forward' in message:
+            msg['fwd'] = message['forward']
+        if 'body' in message:
+            msg['bdy'] = message['body']
+        if 'authorization' in message:
+            msg['aut'] = message['authorization']
+        return msg
 
     def create_message(self, message):
         message = self.to_short(message)
