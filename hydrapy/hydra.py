@@ -303,7 +303,7 @@ class HydraPy:
                 #TODO: loop through instances_list to confirm instance ID is present
             else:
                 instance = instances_list[0]['instanceID']
-            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(msg))
+            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(umf_message))
 
     async def send_message_reply(self, src_message, reply_message):
         msg = None
