@@ -168,6 +168,10 @@ class UMF_Message:
 
         return self._message
 
+    def create_short_message(self, message):
+        self.create_message(message)
+        return self.to_short()
+
     def parse_route(to_value):
         service_name = ''
         http_method = ''
@@ -337,7 +341,8 @@ class HydraPy:
                 #TODO: loop through instances_list to confirm instance ID is present
             else:
                 instance = instances_list[0]['instanceID']
-            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(umf_message))
+            msg = (UMF_Message()).create_short_message(umf_message)
+            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(msg))
 
     async def send_message_reply(self, src_message, reply_message):
         msg = None
@@ -360,7 +365,8 @@ class HydraPy:
     async def send_broadcast_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = f"{self._mc_message_key}:{parsed_route['service_name']}"
-        await self._redis.publish(key, json.dumps(umf_message))
+        msg = (UMF_Message()).create_short_message(umf_message)
+        await self._redis.publish(key, json.dumps(msg))
 
     async def get_presence(self, service_name):
         instance_list = []
@@ -406,7 +412,7 @@ class HydraPy:
             tr.sadd(key, route)
         await tr.execute()
 
-        msg = (UMF_Message()).create_message({
+        msg = (UMF_Message()).create_short_message({
             'to': 'hydra-router:/refresh',
             'from': f'{self._service_name}:/',
             'body': {
@@ -435,7 +441,7 @@ class HydraPy:
             while (await channel.wait_message()):
                 if self._message_handler:
                     msg = await channel.get_json()
-                    msg = (UMF_Message()).create_message(msg)
+                    msg = (UMF_Message()).create_short_message(msg)
                     asyncio.ensure_future(self._message_handler(msg))
 
         ch1 = await self._redis.subscribe(f'{self._mc_message_key}:{self._service_name}')
@@ -494,13 +500,12 @@ class HydraPy:
     async def queue_message(self, message):
         ''' self._service_name isn't used here because any service can queue '''
         ''' a message for another service '''
-        umf_message = UMF_Message()
-        msg = umf_message.create_message(message)
+        msg = (UMF_Message()).create_short_message(message)
         if UMF_Message.validate(msg):
             parsed_route = UMF_Message.parse_route(msg['to'])
             if not parsed_route['error']:
                 service_name = parsed_route['service_name']
-                await self._redis.lpush(f'{self._redis_pre_key}:{service_name}:mqrecieved', json.dumps(umf_message.to_short()))
+                await self._redis.lpush(f'{self._redis_pre_key}:{service_name}:mqrecieved', json.dumps(msg))
 
     async def get_queue_message(self, service_name):
         ''' use self._service_name here to enforce that only a service message '''
