@@ -458,7 +458,7 @@ class HydraPy:
         }))
 
     async def register_queue_handler(self, queue_handler):
-        self._queue_handler = queue_handler
+        return self._queue_handler = queue_handler
 
     async def queue_message(self, message):
         ''' self._service_name isn't used here because any service can queue '''
