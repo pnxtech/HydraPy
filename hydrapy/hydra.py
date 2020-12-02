@@ -294,6 +294,9 @@ class HydraPy:
             'uptimeSeconds': time.time() - psutil.boot_time()
         }
 
+    def _safe_json_stringify(self, umf_message):
+        json.dumps(umf_message, separators=(',', ':'))
+
     async def send_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         instances_list = await self.get_presence(parsed_route['service_name'])
@@ -304,7 +307,7 @@ class HydraPy:
                 #TODO: loop through instances_list to confirm instance ID is present
             else:
                 instance = instances_list[0]['instanceID']
-            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", json.dumps(umf_message))
+            await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", self._safe_json_stringify(umf_message))
 
     async def send_message_reply(self, src_message, reply_message):
         msg = None
@@ -327,7 +330,7 @@ class HydraPy:
     async def send_broadcast_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
         key = f"{self._mc_message_key}:{parsed_route['service_name']}"
-        await self._redis.publish(key, json.dumps(umf_message))
+        await self._redis.publish(key, self._safe_json_stringify(umf_message))
 
     async def get_presence(self, service_name):
         instance_list = []
@@ -381,7 +384,7 @@ class HydraPy:
                 'serviceName': self._service_name
             }
         })
-        await self._redis.publish(f'{self._mc_message_key}:hydra-router', json.dumps(msg))
+        await self._redis.publish(f'{self._mc_message_key}:hydra-router', self._safe_json_stringify(msg))
 
     async def register_message_handler(self, message_handler):
         self._message_handler = message_handler
@@ -394,7 +397,7 @@ class HydraPy:
         }
         tr = self._redis.multi_exec()
         f1 = tr.set(f'{self._redis_pre_key}:{self._service_name}:service',
-                    json.dumps(service_entry))
+                    self._safe_json_stringify(service_entry))
         await tr.execute()
         await asyncio.gather(f1)
 
@@ -432,7 +435,7 @@ class HydraPy:
                       self._KEY_EXPIRATION_TTL,
                       self._instance_id)
         f2 = tr.hset(f'{self._redis_pre_key}:nodes',
-                     self._instance_id, json.dumps(entry))
+                     self._instance_id, self._safe_json_stringify(entry))
         await tr.execute()
         await asyncio.gather(f1, f2)
 
@@ -465,7 +468,7 @@ class HydraPy:
             parsed_route = UMF_Message.parse_route(msg['to'])
             if not parsed_route['error']:
                 service_name = parsed_route['service_name']
-                await self._redis.lpush(f'{self._redis_pre_key}:{service_name}:mqrecieved', json.dumps(msg))
+                await self._redis.lpush(f'{self._redis_pre_key}:{service_name}:mqrecieved', self._safe_json_stringify(msg))
 
     async def get_queue_message(self, service_name):
         ''' use self._service_name here to enforce that only a service message '''
@@ -478,12 +481,12 @@ class HydraPy:
     async def mark_queue_message(self, message, completed, reason):
         ''' use self._service_name here to enforce that only a service message '''
         ''' owner can mark a message as processed '''
-        smsg = json.dumps(message)
+        smsg = self._safe_json_stringify(message)
         await self._redis.lrem(f'{self._redis_pre_key}:{self._service_name}:mqinprogress', -1, smsg)
         if 'bdy' in message:
             message['bdy']['reason'] = reason or 'reason not provided'
         if not completed:
-            smsg = json.dumps(message)
+            smsg = self._safe_json_stringify(message)
             self._redis.rpush(f'{self._redis_pre_key}:{self._service_name}:mqincomplete', smsg)
         return message
 
@@ -491,7 +494,7 @@ class HydraPy:
         tr = self._redis.multi_exec()
         f1 = tr.setex(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health',
                       self._KEY_EXPIRATION_TTL,
-                      json.dumps(self.get_health()))
+                      self._safe_json_stringify(self.get_health()))
         f2 = tr.expire(f'{self._redis_pre_key}:{self._service_name}:{self._instance_id}:health:log',
                        self._ONE_WEEK_IN_SECONDS)
         await tr.execute()
