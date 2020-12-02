@@ -295,7 +295,7 @@ class HydraPy:
         }
 
     def _safe_json_stringify(self, umf_message):
-        json.dumps(umf_message, separators=(',', ':'))
+        return json.dumps(umf_message, separators=(',', ':'))
 
     async def send_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
@@ -458,7 +458,7 @@ class HydraPy:
         }))
 
     async def register_queue_handler(self, queue_handler):
-        return self._queue_handler = queue_handler
+        self._queue_handler = queue_handler
 
     async def queue_message(self, message):
         ''' self._service_name isn't used here because any service can queue '''
