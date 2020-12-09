@@ -294,6 +294,9 @@ class HydraPy:
             'uptimeSeconds': time.time() - psutil.boot_time()
         }
 
+    def get_cloned_redis_client(self):
+        return self._redis.duplicate()
+
     def _safe_json_stringify(self, umf_message):
         return json.dumps(umf_message, separators=(',', ':'))
 
