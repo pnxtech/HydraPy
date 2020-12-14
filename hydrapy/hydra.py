@@ -30,7 +30,6 @@ import socket
 import uuid
 
 from datetime import datetime
-from pprint import pp
 from periodic import Periodic
 
 
@@ -347,7 +346,6 @@ class HydraPy:
         for entries in ids:
             for entry in entries:
                 if len(entry) != 0:
-                    pp(entry)
                     instance_id = entry.split(':')[3]
                     trans.append(tr.hget(f'{self._redis_pre_key}:nodes', instance_id))
         await tr.execute()
