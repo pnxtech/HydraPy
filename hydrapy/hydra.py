@@ -30,7 +30,6 @@ import socket
 import uuid
 
 from datetime import datetime
-from periodic import Periodic
 
 
 class UMF_Message:
@@ -501,7 +500,7 @@ class HydraPy:
         await tr.execute()
         await asyncio.gather(f1, f2)
 
-    async def _hydra_events(self):
+    async def _process_event(self):
         await self._presence_event()
         self._hydra_event_count = self._hydra_event_count + 1
         if self._hydra_event_count % self._HEALTH_UPDATE_INTERVAL == 0:
@@ -509,6 +508,17 @@ class HydraPy:
             await self._health_check_event()
         if self._queue_handler:
             await self._queue_handler()
+
+    async def _hydra_events(self):
+        while True:
+            await asyncio.sleep(self._PRESENCE_UPDATE_INTERVAL)  
+            await self._presence_event()
+            self._hydra_event_count = self._hydra_event_count + 1
+            if self._hydra_event_count % self._HEALTH_UPDATE_INTERVAL == 0:
+                self._hydra_event_count = 0
+                await self._health_check_event()
+            if self._queue_handler:
+                await self._queue_handler()
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
@@ -518,8 +528,7 @@ class HydraPy:
         self._redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
 
         await self._register_service()
-        p = Periodic(self._PRESENCE_UPDATE_INTERVAL, self._hydra_events)
-        await p.start()
+        asyncio.create_task(self._hydra_events())
 
         # TODO: determine best way to close
         # self._redis.close()
