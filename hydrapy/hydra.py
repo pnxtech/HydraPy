@@ -245,7 +245,6 @@ class HydraPy:
         self._service_port = entry['servicePort']
         self._service_description = entry['serviceDescription']
         self._service_type = entry['serviceType']
-        #self._redis_database = entry['redis']['database']
 
     def get_service_name(self):
         return self._service_name
@@ -520,10 +519,12 @@ class HydraPy:
             if self._queue_handler:
                 await self._queue_handler()
 
-    async def init(self):
+    async def init(self, override_redis_connection_string=None):
         self._instance_id = uuid.uuid4().hex
-
-        redis_url = self._config['hydra']['redis']
+        if override_redis_connection_string:
+            redis_url = override_redis_connection_string
+        else:
+            redis_url = self._config['hydra']['redis']
         self._redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
 
         await self._register_service()
