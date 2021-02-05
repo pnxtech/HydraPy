@@ -245,7 +245,7 @@ class HydraPy:
         self._service_port = entry['servicePort']
         self._service_description = entry['serviceDescription']
         self._service_type = entry['serviceType']
-        self._redis_database = entry['redis']['database']
+        #self._redis_database = entry['redis']['database']
 
     def get_service_name(self):
         return self._service_name
@@ -511,7 +511,7 @@ class HydraPy:
 
     async def _hydra_events(self):
         while True:
-            await asyncio.sleep(self._PRESENCE_UPDATE_INTERVAL)  
+            await asyncio.sleep(self._PRESENCE_UPDATE_INTERVAL)
             await self._presence_event()
             self._hydra_event_count = self._hydra_event_count + 1
             if self._hydra_event_count % self._HEALTH_UPDATE_INTERVAL == 0:
@@ -522,7 +522,7 @@ class HydraPy:
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
-       
+
         redis_url = self._config['hydra']['redis']
         self._redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
 
