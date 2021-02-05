@@ -6,10 +6,6 @@
         "servicePort": 15000,
         "serviceType": "example",
         "serviceDescription": "A HydraPy sample service",
-        "redis": {
-            "host": "redis",
-            "port": 6379,
-            "database": 15
-        }
+        "redis": "redis://redis:6379/15"
     }
 }

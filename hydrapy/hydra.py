@@ -522,9 +522,8 @@ class HydraPy:
 
     async def init(self):
         self._instance_id = uuid.uuid4().hex
-
-        redis_entry = self._config['hydra']['redis']
-        redis_url = f"redis://{redis_entry['host']}:{redis_entry['port']}/{redis_entry['database']}"
+       
+        redis_url = self._config['hydra']['redis']
         self._redis = await aioredis.create_redis_pool(redis_url, encoding='utf-8')
 
         await self._register_service()
