@@ -6,6 +6,7 @@ Hydra for Python. A light-weight library for building distributed applications s
 ```diff
 - NOTE THIS PROJECT IS IN VERY EARLY DEVELOPMENT
 - From version 0.3.0 HydraPy only supports the use of short-form UMF see: https://github.com/pnxtech/umf/blob/master/umf.md#Short-form-syntax
+- Starting from version 0.5.0 HydraPy expects a Redis URL formatted connection string in the following format, where unused fields may be ignored:  redis://[user]:[password]@[host:port]/[database_number]
 ```
 - Hydra-Py is changing quickly and not recommended for serious use at this time
 * As a microservices approach, Hydra-Py depends on the presence of a Redis database server as its single infrastructual dependency
