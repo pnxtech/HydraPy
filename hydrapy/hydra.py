@@ -299,14 +299,14 @@ class HydraPy:
 
     async def send_message(self, umf_message):
         parsed_route = UMF_Message.parse_route(umf_message['to'])
-        instances_list = await self.get_presence(parsed_route['service_name'])
-        instance = None
-        if len(instances_list):
-            if parsed_route['instance'] != '':
-                instance = parsed_route['instance']
-                #TODO: loop through instances_list to confirm instance ID is present
-            else:
-                instance = instances_list[0]['instanceID']
+        if parsed_route['instance'] != '':
+            # Use the instance explicitly declared
+            instance = parsed_route['instance']
+        else:
+            # Use an instance from a list of those available in hydra (more expensive)
+            instances_list = await self.get_presence(parsed_route['service_name'])
+            instance = instances_list[0]['instanceID'] if len(instances_list) else None
+        if instance:
             await self._redis.publish(f"{self._mc_message_key}:{parsed_route['service_name']}:{instance}", self._safe_json_stringify(umf_message))
 
     async def send_message_reply(self, src_message, reply_message):
